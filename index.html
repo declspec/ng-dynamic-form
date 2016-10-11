@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Test Dynamic Forms</title>
+
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
+        <script type="text/javascript">angular.module('dynamic-forms', []);</script>
+        <script type="text/javascript" src="scripts/dynamic-form.js"></script>
+    </head>
+
+    <body ng-app="dynamic-forms">
+        <form dynamic-form class="flow">
+            <form-field-text name="name" type="text" properties="{ default: 'blah' }" />
+        </div>
+    </body>
+</html>
