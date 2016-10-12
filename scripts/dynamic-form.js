@@ -161,7 +161,7 @@
             // At this time there doesn't seem to be a way to extract the
             // variables out of a $parsed expression in order to know what
             // needs to be provided. Due to this we use our own special (stupid)
-            // syntax to lightly sugar the expression.
+            // syntax to lightly sugar the expression (essentially just wrap all the field names in square brackets)
             var condition = condition.replace(/\[(\w+)\]/g, function(m, fieldName) {
                 if (dependentFields.indexOf(fieldName) < 0)
                     dependentFields.push(fieldName);

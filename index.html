@@ -17,11 +17,12 @@
             }]);
         </script>
     </head>
-
+    <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
     <body ng-app="dynamic-forms" ng-controller="TestController">
         <form dynamic-form class="flow">
             <form-field-input name="name" type="text" model="name"></form-field-input>
-            <form-field-select name="item" model="item" items="items" condition="[name]==='Jason' && [bar]==='Hello'"></form-field-select>
+            <form-field-input name="bar" type="text" model="bar" condition="[item]==='item1'"></form-field-input>
+            <form-field-select name="item" model="item" items="items" condition="[name]==='Jason'"></form-field-select>
         </div>
     </body>
 </html>
