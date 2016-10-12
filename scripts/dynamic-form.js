@@ -13,12 +13,20 @@
         if (!attrs['name'])
             throw new TypeError('form-field: missing required attribute "name"');
 
+        var field;
+
         scope.name = attrs['name'];
         scope.label = attrs['label'] || labelise(scope.name);
 
         if (attrs['condition']) {
             formController.registerCondition(attrs['condition'], function(value) {
-                value ? $element.show('fast') : $element.hide();
+                if (value)
+                    return $element.show('fast');
+                else {
+                    $element.hide();
+                    if (!field) field = formController.getField(scope.name);
+                    field.onValueChanged(null);
+                }
             });
         }
     }
@@ -38,7 +46,7 @@
 
         modelController.$setViewValue = function(value, trigger) {
             var result = setViewValue.call(self.$$ctrl, value, trigger);
-            self.onValueChanged();
+            self.onValueChanged(self.get());
             return result;
         };
 
@@ -83,8 +91,7 @@
             this.$$listeners.push(listener);
         },
 
-        onValueChanged: function() {
-            var value = this.get();
+        onValueChanged: function(value) {
             for(var i = 0, j = this.$$listeners.length; i < j; ++i) {
                 var listener = this.$$listeners[i];
                 listener(this, value);
@@ -153,7 +160,7 @@
         };
 
         this.getField = function(fieldName) {
-            return fieldModelMap[fieldName] || null;
+            return fieldMap[fieldName] || null;
         };
 
         this.registerCondition = function(condition, callback) {
