@@ -76,9 +76,11 @@
 
     function FormField(name, modelController, validators, validatorFactory) {
         this.name = name;
+        this.errors = [];
+
         this.$$listeners = null;
         this.$$ctrl = modelController;
-        this.$$errors = [];
+        this.$$errors = {};
         this.$$active = true;
 
         var commitViewValue = modelController.$commitViewValue,
@@ -113,11 +115,13 @@
                     
                 collection[validator.name] = function(modelValue, viewValue) {
                     var result = validator.fn.call(validator, self, modelValue, viewValue, args);
-                    if (result === true) 
+                    if (result === true) {
+                        self.clearError(validator.name);
                         return true;
+                    }
 
                     if (typeof(result) === 'string')
-                        self.addError(result);
+                        self.addError(validator.name, result);
                     return false;
                 };
             }
@@ -138,12 +142,9 @@
         },
 
         onValueChanged: function(value) {
-            if (!this.$$listeners)
-                return;
-
             if (typeof(this.$$listeners) === 'function')
                 this.$$listeners(this, value);
-            else {
+            else if (this.$$listeners) {
                 for(var i = 0, j = this.$$listeners.length; i < j; ++i) {
                     var listener = this.$$listeners[i];
                     listener(this, value);
@@ -162,12 +163,16 @@
             return this.$$ctrl.$modelValue || this.$$ctrl.$viewValue;
         },
 
-        addError: function(message) {
-            this.$$errors.push(message);
+        addError: function(type, message) {
+            this.errors.push(message);
+            this.$$errors[type] = this.errors.length - 1;
         },
 
-        clearErrors: function() {
-            this.$$errors.length;
+        clearError: function(type) {
+            if (this.$$errors.hasOwnProperty(type)) {
+                this.errors.splice(this.$errors[type], 1);
+                delete this.$$errors[type];
+            }
         }
     };
 
