@@ -29,6 +29,26 @@
         return label[0].toUpperCase() + label.substring(1);
     }
 
+    //
+    // Hooks some core NgModelController methods to update the field
+    // value.
+    //
+    function hookModelController(modelController, field) {
+        var commitViewValue = modelController.$commitViewValue;
+
+        modelController.$render = function() {
+            field.onValueChanged(this.$modelValue || this.$viewValue);
+        };
+
+        modelController.$commitViewValue = function() {
+            var result = commitViewValue.call(this);
+            field.onValueChanged(this.$modelValue || this.$viewValue);
+            return result;
+        };
+
+        return modelController;
+    }
+
     function FieldDirective(preLink, postLink) {
         this.preLink = preLink || null;
         this.postLink = postLink || null;
@@ -72,63 +92,27 @@
 
     FormField.prototype = Object.create(EventEmitter.prototype);
 
-    function FormField(name, modelController, validators, validatorFactory) {
+    function FormField(name) {
         // Invoke the constructor for EventEmitter (essentially 'super()')
         EventEmitter.prototype.constructor.call(this);
 
         this.name = name;
-        this.$$ctrl = modelController;
+        this.value = undefined;
+
         this.$$errors = {};
         this.$$active = true;
-
-        var commitViewValue = modelController.$commitViewValue,
-            self = this;
-
-        modelController.$render = function() {
-            self.onValueChanged(self.value());
-        };
-
-        modelController.$commitViewValue = function() {
-            var result = commitViewValue.call(self.$$ctrl);
-            self.onValueChanged(self.value());
-            return result;
-        };
-
-        if (validators && validators.length) {
-            for(var i = 0, j = validators.length; i < j; ++i) {
-                var meta = validators[i],
-                    validator = null,
-                    args = null;
-                
-                if (typeof(meta) === 'string') 
-                    validator = validatorFactory(meta);
-                else if (typeof(meta) === 'object' && meta.hasOwnProperty('name')) {
-                    validator = validatorFactory(meta.name);
-                    args = meta.args || null;
-                }
-
-                var collection = validator.async 
-                    ? modelController.$asyncValidators 
-                    : modelController.$validators;
-                    
-                collection[validator.name] = function(modelValue, viewValue) {
-                    var result = validator.fn.call(validator, self, modelValue, viewValue, args);
-                    self.setError(validator.name, result);
-                    return result === true;
-                };
-            }
-        }
     }
 
     // Use Object.assign to avoid wiping out the EventEmitter prototype.
     Object.assign(FormField.prototype, {
         onValueChanged: function(value) {
+            this.value = value;
             this.emit('change', this, value);
         },
 
         setActive: function(active) {
             if (active !== this.$$active) {
-                this.onValueChanged(active ? this.value() : null);
+                this.onValueChanged(active ? this.value : null);
                 this.$$active = active;
                 this.emit('active', this, active);
             }
@@ -143,7 +127,7 @@
                 // prevent the same error emitting over and over 
                 // (i.e failing 'min-length' validation 99 times while typing out a 100 char string)
                 this.$$errors[type] = value;
-                this.emit('validation', type, value);
+                this.emit('error', type, value);
             }
         }
     });
@@ -248,16 +232,60 @@
             link: function(scope, $element, attrs, ctrls) {
                 if (!attrs['formField'])
                     throw new TypeError('form-field: missing required attribute "form-field"');
-                
+
                 var thisController = ctrls[0],
-                    formController = ctrls[1],
-                    modelController = ctrls[2],
-                    validatorsController = ctrls[3];
+                    formController = ctrls[1];
 
-                var validators = validatorsController && validatorsController.validators;
+                var field = new FormField(attrs['formField']);
+                thisController.field = field;
+                formController.registerField(field);
 
-                thisController.field = new FormField(attrs['formField'], modelController, validators, validatorFactory);
-                formController.registerField(thisController.field);
+                // Override model controller methods
+                hookModelController(ctrls[2]);
+            }
+        };
+    }
+
+    MultiFormFieldDirective.$inject = [ '$parse' ];
+    function MultiFormFieldDirective($parse) {
+        return {
+            restrict: 'A',
+            require:  '^ngModel',
+            controller: function() { },
+            link: function(scope, $element, attrs, modelController) {
+                if (!attrs['multiFormField'])
+                    throw new TypeError('multi-form-field: missing required attribute "multi-form-field"');
+                
+                var valueGetter = $parse(attrs['multiFormField']),
+                    allowMultiple = $element.attr('type') === 'checkbox';
+
+                scope.$watchCollection(function() {
+                    return modelController.$modelValue;
+                }, function(newValue, oldValue) {
+
+                });
+
+                $element.on('change', function() {
+                    if (!allowMultiple)
+                        return modelController.$setViewValue(valueGetter(scope));
+
+                    
+
+                }); 
+
+                
+
+
+                var thisController = ctrls[0],
+                    formController = ctrls[1];
+
+                var field = new FormField(attrs['formField']);
+                thisController.field = field;
+                formController.registerField(field);
+
+                // Override model controller methods
+                var modelController = ctrls[2];
+                    
             }
         };
     }
