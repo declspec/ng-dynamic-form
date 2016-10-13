@@ -4,25 +4,35 @@
         <meta charset="utf-8" />
         <title>Test Dynamic Forms</title>
 
+        <link href="//global.curtin.edu.au/template/css/layoutv3.css" rel="stylesheet" type="text/css" />
+        <link href="//global.curtin.edu.au/template/css/contentv3.css" rel="stylesheet" type="text/css" />
+        <link href="//global.curtin.edu.au/template/css/print.css" rel="stylesheet" type="text/css" media="print" />
+        <link href="https://global.curtin.edu.au/flow/forms-2.0.1/css/forms.css" rel="stylesheet" type="text/css" />
+
+
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
         <script type="text/javascript">angular.module('dynamic-forms', []);</script>
         <script type="text/javascript" src="scripts/dynamic-form.js"></script>
         <script type="text/javascript">
-            angular.module('dynamic-forms').controller('TestController', [ '$scope', function($scope) {
-                $scope.items = [
-                    { id: 'item1', name: 'Item 1' },
-                    { id: 'item2', name: 'Item 2' }
-                ];
-            }]);
-        </script>
+                angular.module('dynamic-forms').controller('TestController', [ '$scope', function($scope) {
+                    $scope.items = [
+                        { id: 'item1', name: 'Item 1' },
+                        { id: 'item2', name: 'Item 2' }
+                    ];
+                }]);
+            </script>
     </head>
     <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
-    <body ng-app="dynamic-forms" ng-controller="TestController">
+
+    <body ng-app="dynamic-forms" ng-controller="TestController" id="content">
         <form dynamic-form class="flow">
-            <form-field-input name="name" type="text" model="name"></form-field-input>
-            <form-field-input name="bar" type="text" model="bar" condition="[item]==='item1'"></form-field-input>
-            <form-field-select name="item" model="item" items="items" condition="[name]==='Jason'"></form-field-select>
-        </div>
+            <fieldset>
+                <legend>Dummy Form</legend>
+                <form-field-input name="name" type="text" model="name" validators="[ 'required' ]"></form-field-input>
+                <form-field-input name="bar" type="text" model="bar" condition="[item]==='item1'"></form-field-input>
+                <form-field-select name="item" model="item" items="items" condition="[name]==='Jason'"></form-field-select>
+            </fieldset>
+        </form>
     </body>
 </html>
