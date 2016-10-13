@@ -37,12 +37,10 @@
     FieldDirective.prototype = {
         restrict: 'EA',
         require: '^^dynamicForm',
-        controller: function() { console.log('init controller'); },
         link: {
             // Runs prior to the field template's postLink function
             // use this to initialise any priority scope items
             pre: function(scope, $element, attrs, formController) {
-                console.log('prelink', attrs['name']);
                 if (!attrs['name'])
                     throw new TypeError('form-field: missing required attribute "name"');
 
@@ -57,9 +55,8 @@
             // been linked. In this case the form-field directive (if present)
             // should've been run and registered itself with the form.
             post: function(scope, $element, attrs, formController) {
-                console.log('postlink', scope.name);
                 var field = formController.getField(scope.name);
-                console.log(field);
+
                 if (field && attrs['condition']) {
                     formController.registerCondition(attrs['condition'], function(value) {
                         value ? $element.show('fast') : $element.hide();
@@ -71,14 +68,15 @@
                     this.postLink(scope, $element, attrs, formController);
             }
         }
-
     };
 
-    function FormField(name, modelController, validators, validatorFactory) {
-        this.name = name;
-        this.errors = [];
+    FormField.prototype = Object.create(EventEmitter.prototype);
 
-        this.$$listeners = null;
+    function FormField(name, modelController, validators, validatorFactory) {
+        // Invoke the constructor for EventEmitter (essentially 'super()')
+        EventEmitter.prototype.constructor.call(this);
+
+        this.name = name;
         this.$$ctrl = modelController;
         this.$$errors = {};
         this.$$active = true;
@@ -115,47 +113,24 @@
                     
                 collection[validator.name] = function(modelValue, viewValue) {
                     var result = validator.fn.call(validator, self, modelValue, viewValue, args);
-                    if (result === true) {
-                        self.clearError(validator.name);
-                        return true;
-                    }
-
-                    if (typeof(result) === 'string')
-                        self.addError(validator.name, result);
-                    return false;
+                    self.setError(validator.name, result);
+                    return result === true;
                 };
             }
         }
     }
 
-    FormField.prototype = {
-        addListener: function(listener) {
-            if (typeof(listener) !== 'function')
-                throw new TypeError('FormField#addListener: listener must be a function');
-
-            if (this.$$listeners === null)
-                this.$$listeners = listener;
-            else if (typeof(this.$$listeners) === 'function')
-                this.$$listeners = [ this.$$listeners, listener ];
-            else 
-                this.$$listeners.push(listener);
-        },
-
+    // Use Object.assign to avoid wiping out the EventEmitter prototype.
+    Object.assign(FormField.prototype, {
         onValueChanged: function(value) {
-            if (typeof(this.$$listeners) === 'function')
-                this.$$listeners(this, value);
-            else if (this.$$listeners) {
-                for(var i = 0, j = this.$$listeners.length; i < j; ++i) {
-                    var listener = this.$$listeners[i];
-                    listener(this, value);
-                }
-            }
+            this.emit('change', this, value);
         },
 
         setActive: function(active) {
             if (active !== this.$$active) {
                 this.onValueChanged(active ? this.value() : null);
                 this.$$active = active;
+                this.emit('active', this, active);
             }
         },
 
@@ -163,18 +138,15 @@
             return this.$$ctrl.$modelValue || this.$$ctrl.$viewValue;
         },
 
-        addError: function(type, message) {
-            this.errors.push(message);
-            this.$$errors[type] = this.errors.length - 1;
-        },
-
-        clearError: function(type) {
-            if (this.$$errors.hasOwnProperty(type)) {
-                this.errors.splice(this.$errors[type], 1);
-                delete this.$$errors[type];
+        setError: function(type, value) {
+            if (!this.$$errors.hasOwnProperty(type) || this.$$errors[type] !== value) {
+                // prevent the same error emitting over and over 
+                // (i.e failing 'min-length' validation 99 times while typing out a 100 char string)
+                this.$$errors[type] = value;
+                this.emit('validation', type, value);
             }
         }
-    };
+    });
 
     function ValidatorFactory() {
         var validators = {};
@@ -210,9 +182,9 @@
             if (!watchedFields.hasOwnProperty(field.name))
                 return;
             
-            // This seems to be a little bit backwards as each field has its
-            // own set of $$listeners which you could just register against
-            // directly. However, that would rely on the field already being created
+            // This seems to be a little bit backwards as each field is an EventEmitter
+            // so you could just subscribe via 'on' directly.
+            // However, that would rely on the field already being created
             // at the time that another field requests to watch it, this way allows for
             // deferred field resolution.
             var handlers = watchedFields[field.name];
@@ -223,7 +195,7 @@
 
         this.registerField = function(field, condition) {
             fieldMap[field.name] = field;
-            field.addListener(onFieldUpdated);
+            field.on('change', onFieldUpdated);
         };
 
         this.getField = function(fieldName) {
