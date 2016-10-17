@@ -8,8 +8,10 @@
         .directive('dynamicForm', DynamicFormDirective)
         .directive('validators', ValidatorsDirective)
         .directive('formField', FormFieldDirective)
+        .directive('multiFormField', MultiFormFieldDirective)
         .directive('formFieldInput', FormFieldInputDirective)
-        .directive('formFieldSelect', FormFieldSelectDirective);
+        .directive('formFieldSelect', FormFieldSelectDirective)
+        .directive('formFieldList', FormFieldListDirective);
 
     ngModule.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
         validatorFactoryProvider.register('required', function(field, modelValue, viewValue) {
@@ -118,8 +120,8 @@
             }
         },
 
-        value: function() {
-            return this.$$ctrl.$modelValue || this.$$ctrl.$viewValue;
+        getValue: function() {
+            return this.value;
         },
 
         setError: function(type, value) {
@@ -228,20 +230,25 @@
         return {
             restrict: 'A',
             require: [ 'formField', '^^dynamicForm', 'ngModel', '?^validators' ],
-            controller: function() { },
+            controller: function() {  },
             link: function(scope, $element, attrs, ctrls) {
                 if (!attrs['formField'])
                     throw new TypeError('form-field: missing required attribute "form-field"');
 
                 var thisController = ctrls[0],
-                    formController = ctrls[1];
+                    formController = ctrls[1],
+                    modelController = ctrls[2];
 
                 var field = new FormField(attrs['formField']);
                 thisController.field = field;
                 formController.registerField(field);
 
                 // Override model controller methods
-                hookModelController(ctrls[2]);
+                hookModelController(modelController, field);
+
+                thisController.setValue = function(value) {
+                    modelController.$setViewValue(value);
+                };
             }
         };
     }
@@ -250,42 +257,50 @@
     function MultiFormFieldDirective($parse) {
         return {
             restrict: 'A',
-            require:  '^ngModel',
+            require: '^^formField',
+            priority: 0,
             controller: function() { },
-            link: function(scope, $element, attrs, modelController) {
+            link: function(scope, $element, attrs, formFieldController) {
                 if (!attrs['multiFormField'])
                     throw new TypeError('multi-form-field: missing required attribute "multi-form-field"');
                 
-                var valueGetter = $parse(attrs['multiFormField']),
+                var value = attrs['multiFormField'],
+                    element = $element.get(0),
                     allowMultiple = $element.attr('type') === 'checkbox';
 
-                scope.$watchCollection(function() {
-                    return modelController.$modelValue;
-                }, function(newValue, oldValue) {
-
-                });
+                formFieldController.field.on('change', onUpdate);
 
                 $element.on('change', function() {
-                    if (!allowMultiple)
-                        return modelController.$setViewValue(valueGetter(scope));
-
-                    
-
+                    return allowMultiple || this.checked
+                        ? scope.$apply(processChange)
+                        : null;
                 }); 
 
-                
-
-
-                var thisController = ctrls[0],
-                    formController = ctrls[1];
-
-                var field = new FormField(attrs['formField']);
-                thisController.field = field;
-                formController.registerField(field);
-
-                // Override model controller methods
-                var modelController = ctrls[2];
+                function processChange() {
+                    if (!allowMultiple)
+                        return formFieldController.setValue(value);
                     
+                    var model = modelController.$modelValue;
+                    if (!Array.isArray(model))
+                        model = model ? [ model ] : [];
+                        
+                    var idx = model.indexOf(value);
+
+                    if (element.checked && idx < 0) {
+                        model.push(value);
+                        modelController.$setViewValue(model);
+                    }
+                    else if (!element.checked && idx >= 0) {
+                        model.splice(idx, 1);
+                        modelController.$setViewValue(model);
+                    }
+                }
+
+                function onUpdate(modelValue) {
+                    element.checked = modelValue 
+                        && ((!Array.isArray(modelValue) && modelValue == value) 
+                            || (Array.isArray(modelValue) && modelValue.indexOf(value) >= 0));
+                }
             }
         };
     }
@@ -326,5 +341,19 @@
         directive.scope = { model: '=', items: '=' };
 
         return directive;
+    }
+
+    function FormFieldListDirective() {
+        var directive = new FieldDirective(preLink);
+        directive.templateUrl = 'templates/list.html';
+        directive.scope = { model: '=', items: '=' };
+        
+        return directive;
+
+        function preLink(scope, $element, attrs, formController) {
+            if (!attrs['type'])
+                throw new TypeError('form-field-list: missing required attribute "type"');
+            scope.type = attrs['type'];
+        };
     }
 }());
