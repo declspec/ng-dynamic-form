@@ -27,15 +27,16 @@
     <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
 
     <body ng-app="dynamic-forms" ng-controller="TestController" id="content">
-        <form dynamic-form class="flow">
+        <form dynamic-form state="state" class="flow">
             <fieldset>
                 <legend>Dummy Form</legend>
-                <form-field-input name="name" type="text" model="name" validators="[ 'required' ]"></form-field-input>
-                <form-field-input name="bar" type="text" model="bar" condition="[check].indexOf('item1') >= 0"></form-field-input>
-                <form-field-select name="item" model="item" items="items" condition="[name]==='Jason'"></form-field-select>
-                <form-field-list type="checkbox" name="check" model="check" items="items"></form-field-list>
-
-                <div>{{check|json}}</div>
+                <form-field-input name="name" type="text" validators="[ 'required' ]"></form-field-input>
+                <form-field-input name="bar" type="text" condition="[check].indexOf('item1') >= 0"></form-field-input>
+                <form-field-select name="item" items="items" condition="[name]==='Jason'"></form-field-select>
+                <form-field-checklist name="check" items="items"></form-field-checklist>
+                <form-field-radiolist name="radio" items="items"></form-field-radiolist>
+                <form-field-textarea name="area"></form-field-textarea>
+                <div>{{state|json}}</div>
             </fieldset>
         </form>
     </body>

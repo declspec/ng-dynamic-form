@@ -8,10 +8,12 @@
         .directive('dynamicForm', DynamicFormDirective)
         .directive('validators', ValidatorsDirective)
         .directive('formField', FormFieldDirective)
-        .directive('multiFormField', MultiFormFieldDirective)
+        .directive('multiModel', MultiModelDirective)
         .directive('formFieldInput', FormFieldInputDirective)
         .directive('formFieldSelect', FormFieldSelectDirective)
-        .directive('formFieldList', FormFieldListDirective);
+        .directive('formFieldChecklist', FormFieldCheckListDirective)
+        .directive('formFieldRadiolist', FormFieldRadioListDirective)
+        .directive('ngModel', NgModelDirective);
 
     ngModule.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
         validatorFactoryProvider.register('required', function(field, modelValue, viewValue) {
@@ -31,26 +33,6 @@
         return label[0].toUpperCase() + label.substring(1);
     }
 
-    //
-    // Hooks some core NgModelController methods to update the field
-    // value.
-    //
-    function hookModelController(modelController, field) {
-        var commitViewValue = modelController.$commitViewValue;
-
-        modelController.$render = function() {
-            field.onValueChanged(this.$modelValue || this.$viewValue);
-        };
-
-        modelController.$commitViewValue = function() {
-            var result = commitViewValue.call(this);
-            field.onValueChanged(this.$modelValue || this.$viewValue);
-            return result;
-        };
-
-        return modelController;
-    }
-
     function FieldDirective(preLink, postLink) {
         this.preLink = preLink || null;
         this.postLink = postLink || null;
@@ -58,11 +40,12 @@
 
     FieldDirective.prototype = {
         restrict: 'EA',
-        require: '^^dynamicForm',
+        scope: {},
+        require: ['^^dynamicForm'],
         link: {
             // Runs prior to the field template's postLink function
             // use this to initialise any priority scope items
-            pre: function(scope, $element, attrs, formController) {
+            pre: function(scope, $element, attrs, ctrls) {
                 if (!attrs['name'])
                     throw new TypeError('form-field: missing required attribute "name"');
 
@@ -70,24 +53,24 @@
                 scope.label = attrs['label'] || labelise(scope.name);
 
                 if (this.preLink !== null)
-                    this.preLink(scope, $element, attrs, formController);
+                    this.preLink(scope, $element, attrs, ctrls);
             },
 
             // Runs after the field template's child directives have
             // been linked. In this case the form-field directive (if present)
             // should've been run and registered itself with the form.
-            post: function(scope, $element, attrs, formController) {
-                var field = formController.getField(scope.name);
+            post: function(scope, $element, attrs, ctrls) {
+                var field = ctrls[0].getField(scope.name);
 
                 if (field && attrs['condition']) {
-                    formController.registerCondition(attrs['condition'], function(value) {
+                    ctrls[0].registerCondition(attrs['condition'], function(value) {
                         value ? $element.show('fast') : $element.hide();
                         field.setActive(value);
                     });
                 }
 
                 if (this.postLink !== null)
-                    this.postLink(scope, $element, attrs, formController);
+                    this.postLink(scope, $element, attrs, ctrls);
             }
         }
     };
@@ -106,33 +89,39 @@
     }
 
     // Use Object.assign to avoid wiping out the EventEmitter prototype.
-    Object.assign(FormField.prototype, {
-        onValueChanged: function(value) {
-            this.value = value;
-            this.emit('change', this, value);
-        },
+    Object.assign(FormField.prototype, (function() {
+        function triggerValueChange(field, value) {
+            field.emit('change', field, value);
+        }
 
-        setActive: function(active) {
-            if (active !== this.$$active) {
-                this.onValueChanged(active ? this.value : null);
-                this.$$active = active;
-                this.emit('active', this, active);
-            }
-        },
+        return {
+            setValue: function(value) {
+                this.value = value;
+                triggerValueChange(this, value);
+            },
 
-        getValue: function() {
-            return this.value;
-        },
+            getValue: function() {
+                return this.value;
+            },
 
-        setError: function(type, value) {
-            if (!this.$$errors.hasOwnProperty(type) || this.$$errors[type] !== value) {
-                // prevent the same error emitting over and over 
-                // (i.e failing 'min-length' validation 99 times while typing out a 100 char string)
-                this.$$errors[type] = value;
-                this.emit('error', type, value);
+            setActive: function(active) {
+                if (active !== this.$$active) {
+                    triggerValueChange(this, active ? this.value : null);
+                    this.$$active = active;
+                    this.emit('active', this, active);
+                }
+            },
+
+            setError: function(type, value) {
+                if (!this.$$errors.hasOwnProperty(type) || this.$$errors[type] !== value) {
+                    // prevent the same error emitting over and over 
+                    // (i.e failing 'min-length' validation 99 times while typing out a 100 char string)
+                    this.$$errors[type] = value;
+                    this.emit('error', type, value);
+                }
             }
         }
-    });
+    }()));
 
     function ValidatorFactory() {
         var validators = {};
@@ -156,11 +145,12 @@
         };
     }
 
-    DynamicFormController.$inject = [ '$parse' ];
-    function DynamicFormController($parse) {
+    DynamicFormController.$inject = [ '$scope', '$parse' ];
+    function DynamicFormController($scope, $parse) {
         var fieldMap = {},
-            watchedFields = {},
-            state = {};
+            watchedFields = {};
+
+        var state = $scope.state || ($scope.state = {});
 
         var onFieldUpdated = function(field, value) {
             state[field.name] = value;
@@ -182,6 +172,10 @@
         this.registerField = function(field, condition) {
             fieldMap[field.name] = field;
             field.on('change', onFieldUpdated);
+
+            // Initialise the field from the current state (if present)
+            if (state.hasOwnProperty(field.name))
+                field.setValue(state[field.name]);
         };
 
         this.getField = function(fieldName) {
@@ -215,9 +209,8 @@
             for(var i = 0, j = dependentFields.length; i < j; ++i) {
                 var fieldName = dependentFields[i];
                 if (!watchedFields.hasOwnProperty(fieldName))
-                    watchedFields[fieldName] = [ conditionalFn ];
-                else 
-                    watchedFields[fieldName].push(conditionalFn);
+                    watchedFields[fieldName] = [];
+                watchedFields[fieldName].push(conditionalFn);
             }
 
             // Run the condition once to initialise
@@ -225,50 +218,78 @@
         };
     }
 
+    function DynamicFormDirective() {
+        return {
+            restrict: 'AE',
+            controller: 'DynamicFormController',
+            scope: { state: '=' }
+        };
+    }
+
     FormFieldDirective.$inject = [ 'ValidatorFactory' ];
     function FormFieldDirective(validatorFactory) {
         return {
             restrict: 'A',
-            require: [ 'formField', '^^dynamicForm', 'ngModel', '?^validators' ],
+            require: [ 'formField', '^^dynamicForm' ],
             controller: function() {  },
-            link: function(scope, $element, attrs, ctrls) {
-                if (!attrs['formField'])
-                    throw new TypeError('form-field: missing required attribute "form-field"');
-
-                var thisController = ctrls[0],
-                    formController = ctrls[1],
-                    modelController = ctrls[2];
-
-                var field = new FormField(attrs['formField']);
-                thisController.field = field;
-                formController.registerField(field);
-
-                // Override model controller methods
-                hookModelController(modelController, field);
-
-                thisController.setValue = function(value) {
-                    modelController.$setViewValue(value);
-                };
-            }
+            link: { pre: preLink }
         };
+
+        function preLink(scope, $element, attrs, ctrls) {
+            if (!attrs['formField'])
+                throw new TypeError('form-field: missing required attribute "form-field"');
+
+            var thisController = ctrls[0],
+                formController = ctrls[1];
+
+            var field = new FormField(attrs['formField']);
+            thisController.field = field;
+            formController.registerField(field);
+        }
     }
 
-    MultiFormFieldDirective.$inject = [ '$parse' ];
-    function MultiFormFieldDirective($parse) {
+    function NgModelDirective() {
+        return {
+            restrict: 'A',
+            require: ['ngModel', '?^formField'],
+            priority: 0,
+            link: function(scope, $element, attrs, ctrls) {
+                if (!ctrls[1])
+                    return;
+
+                var modelController = ctrls[0],
+                    field = ctrls[1].field;
+
+                // Override model controller methods     
+                var commitViewValue = modelController.$commitViewValue;
+
+                modelController.$render = function() {
+                    field.setValue(this.$modelValue || this.$viewValue);
+                };
+
+                modelController.$commitViewValue = function() {
+                    var result = commitViewValue.call(this);
+                    field.setValue(this.$modelValue || this.$viewValue);
+                    return result;
+                };
+            }
+        }
+    }
+
+    function MultiModelDirective() {
         return {
             restrict: 'A',
             require: '^^formField',
-            priority: 0,
-            controller: function() { },
             link: function(scope, $element, attrs, formFieldController) {
-                if (!attrs['multiFormField'])
-                    throw new TypeError('multi-form-field: missing required attribute "multi-form-field"');
+                if (!attrs['multiModel'])
+                    throw new TypeError('multi-model: missing required attribute "multi-model"');
                 
-                var value = attrs['multiFormField'],
+                var value = attrs['multiModel'],
                     element = $element.get(0),
+                    field = formFieldController.field,
                     allowMultiple = $element.attr('type') === 'checkbox';
 
-                formFieldController.field.on('change', onUpdate);
+                field.on('change', onUpdate);
 
                 $element.on('change', function() {
                     return allowMultiple || this.checked
@@ -278,9 +299,9 @@
 
                 function processChange() {
                     if (!allowMultiple)
-                        return formFieldController.setValue(value);
+                        return field.setValue(value);
                     
-                    var model = modelController.$modelValue;
+                    var model = field.getValue();
                     if (!Array.isArray(model))
                         model = model ? [ model ] : [];
                         
@@ -288,27 +309,20 @@
 
                     if (element.checked && idx < 0) {
                         model.push(value);
-                        modelController.$setViewValue(model);
+                        field.setValue(model);
                     }
                     else if (!element.checked && idx >= 0) {
                         model.splice(idx, 1);
-                        modelController.$setViewValue(model);
+                        field.setValue(model);
                     }
                 }
 
-                function onUpdate(modelValue) {
+                function onUpdate(field, modelValue) {
                     element.checked = modelValue 
                         && ((!Array.isArray(modelValue) && modelValue == value) 
                             || (Array.isArray(modelValue) && modelValue.indexOf(value) >= 0));
                 }
             }
-        };
-    }
-
-    function DynamicFormDirective() {
-        return {
-            restrict: 'AE',
-            controller: 'DynamicFormController'
         };
     }
 
@@ -324,7 +338,6 @@
     function FormFieldInputDirective() {
         var directive = new FieldDirective(preLink);
         directive.templateUrl = 'templates/input.html';
-        directive.scope = { model: '=' };
 
         return directive;
 
@@ -338,22 +351,46 @@
     function FormFieldSelectDirective() {
         var directive = new FieldDirective();
         directive.templateUrl = 'templates/select.html';
-        directive.scope = { model: '=', items: '=' };
+        directive.scope = { items: '=' };
 
         return directive;
     }
 
-    function FormFieldListDirective() {
-        var directive = new FieldDirective(preLink);
-        directive.templateUrl = 'templates/list.html';
-        directive.scope = { model: '=', items: '=' };
+    function FormFieldCheckListDirective() {
+        var directive = new FieldDirective();
+        directive.templateUrl = 'templates/checklist.html';
+        directive.scope = {  items: '=' };
         
         return directive;
+    }
 
-        function preLink(scope, $element, attrs, formController) {
-            if (!attrs['type'])
-                throw new TypeError('form-field-list: missing required attribute "type"');
-            scope.type = attrs['type'];
-        };
+    function FormFieldRadioListDirective() {
+        var directive = new FieldDirective();
+        directive.templateUrl = 'templates/radiolist.html';
+        directive.scope = { items: '=' };
+        
+        return directive;
+    }
+
+    function FormFieldViewDirective() {
+        var directive = new FieldDirective();
+        directive.templateUrl = 'templates/radiolist.html';
+
+        return directive;
+
+        function postLink(scope, $element, attrs, ctrls) {
+            var field = ctrls
+        }
+    }
+
+    function FormFieldReadonlyDirective() {
+        var directive = new FieldDirective();
+        directive.templateUrl = 'templates/readonly.html';
+
+        return directive;
+
+        function postLink(scope, $element, attrs) {
+            
+        }
     }
 }());
