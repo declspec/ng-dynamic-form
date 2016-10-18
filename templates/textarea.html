@@ -1,2 +1,5 @@
 <dt><label ng-attr-for="{{::name}}" ng-bind="::label"></label></dt>
-<dd><textarea form-field="{{::name}}" ng-attr-id="{{::name}}" ng-model="model" ng-attr-type="{{::type}}"></textarea></dd>
+<dd>
+    <div ng-transclude></div>
+    <textarea field-model="{{::name}}" ng-attr-id="{{::name}}" ng-model="model" ng-attr-type="{{::type}}"></textarea>
+</dd>

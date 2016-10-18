@@ -1,7 +1,8 @@
 <dt><label ng-attr-for="{{::name}}" ng-bind="::label"></label></dt>
 <dd>
+    <div ng-transclude></div>
     <select 
-        form-field="{{::name}}" 
+        field-model="{{::name}}" 
         ng-attr-id="{{::name}}" 
         ng-model="model" 
         ng-options="item.id as item.name for item in items track by item.id"

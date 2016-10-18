@@ -1,8 +1,9 @@
 <dt><label ng-bind="::label"></label></dt>
-<dd ng-model="model" form-field="{{::name}}">
+<dd>
+	<div ng-transclude></div>
 	<ul class="radio">
 		<li ng-repeat="item in items track by item.id">
-            <input type="radio" ng-attr-id="{{::name + '_' + $index }}" ng-attr-name="{{::name}}" multi-model="{{::item.id}}" />
+            <input type="radio" ng-attr-id="{{::name + '_' + $index }}" ng-attr-name="{{::name}}" field-multi-model="{{::name}}" value="{{::item.id}}" />
 			<label ng-attr-for="{{::name + '_' + $index }}" ng-bind="::item.name"></label>
 		</li>
 	</ul>

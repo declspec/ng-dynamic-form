@@ -14,6 +14,7 @@
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
         <script type="text/javascript">angular.module('dynamic-forms', []);</script>
+        <script type="text/javascript" src="scripts/form.js"></script>
         <script type="text/javascript" src="scripts/dynamic-form.js"></script>
         <script type="text/javascript">
                 angular.module('dynamic-forms').controller('TestController', [ '$scope', function($scope) {
@@ -30,9 +31,17 @@
         <form dynamic-form state="state" class="flow">
             <fieldset>
                 <legend>Dummy Form</legend>
-                <form-field-input name="name" type="text" validators="[ 'required' ]"></form-field-input>
-                <form-field-input name="bar" type="text" condition="[check].indexOf('item1') >= 0"></form-field-input>
-                <form-field-select name="item" items="items" condition="[name]==='Jason'"></form-field-select>
+
+                <form-field-input name="name" type="text">
+                    <p class="hint plain bold">Text entered into this field is automatically 
+                        inserted into communication with the student. 
+                        Please be mindful of the language used as the 
+                        <strong>student(s) will see this text.</strong>
+                    </p>
+                </form-field-input>
+                
+                <form-field-input name="bar" type="text" condition="[check].anyEqual('item1')"></form-field-input>
+                <form-field-select name="item" items="items" condition="[name].equals('Jason')"></form-field-select>
                 <form-field-checklist name="check" items="items"></form-field-checklist>
                 <form-field-radiolist name="radio" items="items"></form-field-radiolist>
                 <form-field-textarea name="area"></form-field-textarea>
