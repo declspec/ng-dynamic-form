@@ -39,12 +39,15 @@
                         <strong>student(s) will see this text.</strong>
                     </p>
                 </form-field-input>
-                
+
                 <form-field-input name="bar" type="text" condition="[check].anyEqual('item1')"></form-field-input>
                 <form-field-select name="item" items="items" condition="[name].equals('Jason')"></form-field-select>
                 <form-field-checklist name="check" items="items"></form-field-checklist>
                 <form-field-radiolist name="radio" items="items"></form-field-radiolist>
                 <form-field-textarea name="area"></form-field-textarea>
+
+                <form-field-readonly name="bar" condition="![bar].empty()"></form-field-readonly>
+
                 <div>{{state|json}}</div>
             </fieldset>
         </form>

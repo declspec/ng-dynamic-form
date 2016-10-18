@@ -95,8 +95,39 @@ extend(DynamicFormField.prototype, (function() {
         // --
         // Value testers: Each are specific to data types
         // --
+        in: function(array) {
+            if (!Array.isArray(array))
+                throw new TypeError('FormField::in(): parameter is not a valid array');
+
+            var current = this.getValue();
+            for(var i = 0, j = array.length; i < j; ++i) {
+                if (array[i] == current)
+                    return true;
+            }
+            return false;
+        },
+
+        empty: function() {
+            var current = this.getValue();
+            return !current || (Array.isArray(current) && current.length === 0);
+        },
+
         equals: function(value) {
-            return this.getValue() == value;
+            var current = this.getValue();
+            if (Array.isArray(current)) {
+                if (!Array.isArray(value) || value.length !== current.length)
+                    return false;
+                
+                for(var i = 0, j = current.length; i < j; ++i) {
+                    if (current[i] != value[i])
+                        return false;
+                }
+
+                return true;
+            }
+            else if ('object' === 
+
+            return current == value;
         },
 
         like: function(regexp) {
@@ -244,7 +275,7 @@ DynamicForm.prototype = (function() {
             });
 
             if (dependentFields.length === 0)
-                throw new Error('DynamicForm::addCondition: conditional expression does not contain any field references');
+                throw new Error('DynamicForm::addCondition(): conditional expression does not contain any field references');
 
             var parsedExpr = this.$$parser(condition),
                 fields = this.$$fields,

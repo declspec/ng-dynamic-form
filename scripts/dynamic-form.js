@@ -8,7 +8,8 @@
         .directive('formFieldSelect', FormFieldSelectDirective)
         .directive('formFieldChecklist', FormFieldCheckListDirective)
         .directive('formFieldRadiolist', FormFieldRadioListDirective)
-        .directive('formFieldReadonly', FormFieldReadonlyDirective);
+        .directive('formFieldReadonly', FormFieldReadonlyDirective)
+        .directive('formFieldTextarea', FormFieldTextareaDirective);
 
     function inherits(target, parent) {
         target.prototype = Object.create(parent.prototype, {
@@ -80,7 +81,6 @@
         },
 
         postLink: function(scope, $element, attrs, ctrls) { 
-            // Empty stub
         }
     });
 
@@ -224,6 +224,12 @@
         var directive = new FieldBase();
         directive.templateUrl = 'templates/radiolist.html';
         directive.scope = { items: '=' };
+        return directive;
+    }
+
+    function FormFieldTextareaDirective() {
+        var directive = new FieldBase();
+        directive.templateUrl = 'templates/textarea.html';
         return directive;
     }
 }());
