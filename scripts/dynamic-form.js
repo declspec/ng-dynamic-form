@@ -374,6 +374,8 @@
     inherit(FieldReadonly, FieldBase);
 
     // Prototype chains
+    // nb: use extend rather than direct assignment otherwise the previous 'inherits'
+    // invocations will no longer point to the same prototype chain
     extend(FieldBase.prototype, {
         restrict: 'EA',
         scope: {},
@@ -408,6 +410,7 @@
         },
 
         postLink: function(scope, $element, attrs, ctrls) { 
+            // Empty stub, can be overriden if needed
         }
     });
 

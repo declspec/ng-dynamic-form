@@ -9,14 +9,11 @@
         <link href="//global.curtin.edu.au/template/css/print.css" rel="stylesheet" type="text/css" media="print" />
         <link href="https://global.curtin.edu.au/flow/forms-2.0.1/css/forms.css" rel="stylesheet" type="text/css" />
 
-
-        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/EventEmitter/5.1.0/EventEmitter.min.js"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
-        <script type="text/javascript">angular.module('dynamic-forms', []);</script>
-        <script type="text/javascript" src="scripts/dynamic-form.js"></script>
+        <script type="text/javascript" src="bin/dynamic-form.js"></script>
         <script type="text/javascript">
-                angular.module('dynamic-forms').controller('TestController', [ '$scope', function($scope) {
+                angular.module('ng-dynamic-form').controller('TestController', [ '$scope', function($scope) {
                     $scope.items = [
                         { id: 'item1', name: 'Item 1' },
                         { id: 'item2', name: 'Item 2' }
@@ -26,7 +23,7 @@
     </head>
     <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
 
-    <body ng-app="dynamic-forms" ng-controller="TestController" id="content">
+    <body ng-app="ng-dynamic-form" ng-controller="TestController" id="content">
         <form dynamic-form state="state" class="flow">
             <fieldset>
                 <legend>Dummy Form</legend>
