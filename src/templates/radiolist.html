@@ -2,9 +2,9 @@
 <dd>
 	<div ng-transclude></div>
 	<ul class="radio">
-		<li ng-repeat="item in items track by item.id">
-            <input type="radio" ng-attr-id="{{::name + '_' + $index }}" ng-attr-name="{{::name}}" field-multi-model="{{::name}}" value="{{::item.id}}" />
-			<label ng-attr-for="{{::name + '_' + $index }}" ng-bind="::item.name"></label>
+		<li ng-repeat="item in items track by item[valueProperty]">
+            <input type="radio" ng-attr-id="{{::name + '_' + $index }}" ng-attr-name="{{::name}}" field-multi-model="{{::name}}" value="{{::item[valueProperty]}}" />
+			<label ng-attr-for="{{::name + '_' + $index }}" ng-bind="::item[displayProperty]"></label>
 		</li>
 	</ul>
 </dd>

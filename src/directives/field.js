@@ -2,7 +2,7 @@ function FieldDirective() { }
 
 FieldDirective.prototype = {
     restrict: 'EA',
-    scope: {},
+    scope: { change: '&' },
     transclude: true,
     require: ['^^dynamicForm'],
     link: {
@@ -30,6 +30,10 @@ FieldDirective.prototype = {
             ctrls[0].form.addFieldCondition(scope.field, attrs['condition'], function(value) {
                 value ? $element.show('fast') : $element.hide();
             });
+        }
+
+        if (scope.field && 'function' === typeof(scope.change)) {
+            scope.field.on('change', scope.change);
         }
     },
 

@@ -1,10 +1,9 @@
-var webpack = require('webpack');
+var webpack = require('webpack'),
+    pkg = require('./package.json'),
+    libName = 'ng-dynamic-form-' + pkg.version;
 
 module.exports = {
     entry: {
-        'dynamic-form': [
-            './src/index.js'
-        ]
     },
 
     output: {
@@ -21,16 +20,26 @@ module.exports = {
         loaders: [
             { 
                 test: /\.html$/, 
-                loader: 'html' 
+                loader: 'ngtemplate?relativeTo=src/&prefix=ng-dynamic-form-!html' 
             },
             { 
                 test: /\.js$/,
                 exclude: /node_modules/,
-                loader: 'babel', // 'babel-loader' is also a valid name to reference
+                loader: 'babel',
                 query: {
                     presets: ['es2015']
                 }
             }
         ]
-    }
-}
+    },
+
+    plugins: [
+        new webpack.optimize.UglifyJsPlugin({
+            include: /\.min\.js$/,
+            minimize: true,
+            mangle: true
+        })
+    ]
+};
+
+module.exports.entry[libName] = module.exports.entry[libName + '.min'] = [ './src/index.js' ];

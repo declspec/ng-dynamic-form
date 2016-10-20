@@ -5,6 +5,6 @@
         field-model="{{::name}}" 
         ng-attr-id="{{::name}}" 
         ng-model="model" 
-        ng-options="item.id as item.name for item in items track by item.id"
+        ng-options="item[valueProperty] as item[displayProperty] for item in items track by item[valueProperty]"
     ></select>
 </dd>

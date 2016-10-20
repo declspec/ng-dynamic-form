@@ -1,12 +1,12 @@
 import * as Directives from './directives';
 
 // Need to load all the templates upfront
-var inputFieldTemplate = require('ngtemplate!html!./templates/input.html'),
-    readonlyFieldTemplate = require('ngtemplate!html!./templates/readonly.html'),
-    selectFieldTemplate = require('ngtemplate!html!./templates/select.html'),
-    checklistFieldTemplate = require('ngtemplate!html!./templates/checklist.html'),
-    radiolistFieldTemplate = require('ngtemplate!html!./templates/radiolist.html'),
-    textareaFieldTemplate = require('ngtemplate!html!./templates/textarea.html');
+var inputFieldTemplate = require('./templates/input.html'),
+    readonlyFieldTemplate = require('./templates/readonly.html'),
+    selectFieldTemplate = require('./templates/select.html'),
+    checklistFieldTemplate = require('./templates/checklist.html'),
+    radiolistFieldTemplate = require('./templates/radiolist.html'),
+    textareaFieldTemplate = require('./templates/textarea.html');
 
 var libName = 'ng-dynamic-form';
 
@@ -49,23 +49,20 @@ function ReadonlyFieldDirectiveFactory() {
 }
 
 function SelectFieldDirectiveFactory() {
-    var directive = new Directives.Field();
+    var directive = new Directives.ListField();
     directive.templateUrl = selectFieldTemplate;
-    directive.scope = { items: '=' };
     return directive;
 }
 
 function CheckListFieldDirectiveFactory() {
-    var directive = new Directives.Field();
+    var directive = new Directives.ListField();
     directive.templateUrl = checklistFieldTemplate;
-    directive.scope = {  items: '=' };
     return directive;
 }
 
 function RadioListFieldDirectiveFactory() {
-    var directive = new Directives.Field();
+    var directive = new Directives.ListField();
     directive.templateUrl = radiolistFieldTemplate;
-    directive.scope = { items: '=' };
     return directive;
 }
 

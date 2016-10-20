@@ -11,7 +11,7 @@
 
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
-        <script type="text/javascript" src="bin/dynamic-form.js"></script>
+        <script type="text/javascript" src="bin/ng-dynamic-form-0.1.0.min.js"></script>
         <script type="text/javascript">
                 angular.module('ng-dynamic-form').controller('TestController', [ '$scope', function($scope) {
                     $scope.items = [
@@ -37,7 +37,7 @@
                 </form-field-input>
 
                 <form-field-input name="bar" type="text" condition="[check].matches(['item1','item2'])"></form-field-input>
-                <form-field-select name="item" items="items" condition="[name].val().indexOf('Jason') === 0"></form-field-select>
+                <form-field-select name="item" items="items" condition="![bar].empty()"></form-field-select>
                 <form-field-checklist name="check" items="items"></form-field-checklist>
                 <form-field-radiolist name="radio" items="items"></form-field-radiolist>
                 <form-field-textarea name="area"></form-field-textarea>
