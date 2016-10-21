@@ -1,17 +1,17 @@
 import Field from './field';
 
-function Form(state, parser) {
+function Form(initialState, parser) {
     this.$$fields = {};
     this.$$watchers = {};
     this.$$parser = parser;
 
-    this.$init(state);
+    this.$init(initialState);
 }
 
 Form.prototype = {
     $init: function(state) {
         var self = this;
-        self.state = state || {};
+        self.$$state = state || {};
 
         // Bind private functions
         this.$onFieldChanged = function(field, value) {
@@ -29,6 +29,10 @@ Form.prototype = {
                     addField(this, prop, state[prop]);
             }   
         }
+    },
+
+    valueOf: function(fieldName) {
+        return this.$$state[fieldName];
     },
 
     getField: function(name) {
@@ -95,7 +99,7 @@ function addField(form, name, value) {
 }
 
 function onFieldChanged(form, field, value) {
-    form.state[field.name] = value;
+    form.$$state[field.name] = value;
 
     // This seems to be a little bit backwards as each field is an EventEmitter
     // so you could just subscribe via 'on' directly.

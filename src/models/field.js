@@ -25,6 +25,10 @@ Field.prototype = extend(EventEmitter.methods, {
         this.$$value = null;
         triggerValueChanged(this, this.$$value);
     },
+
+    isActive: function() {
+        return this.$$active;
+    },
     
     // --
     // Value testers
