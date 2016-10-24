@@ -13,12 +13,17 @@ ValidatorDirective.prototype = {
             field = formController.form.getField(attrs['for']),
             self = this;
 
-        var validators = validatorMetadata && !Array.isArray(validatorMetadata)
-            ? [ createValidator(validatorMetadata) ]
-            : (Array.isArray(validatorMetadata) ? validatorMetadata.map(createValidator) : []);
+        if (validatorMetadata && !Array.isArray(validatorMetadata))
+            field.addValidator(createValidator(validator));
+        else if (Array.isArray(validatorMetadata) && validatorMetadata.length > 0) {
+            for(var i = 0, j = validatorMetadata.length; i < j; ++i) {
+                field.addValidator(createValidator(validatorMetadata[i]));
+            }
+        }
 
-        field.on('change', function(field) {
-            
+        field.on('validated', function(field, previouslyValid) {
+            if (field.isValid() !== previouslyValid)
+                $element[previouslyValid ? 'addClass' : 'removeClass'] = 'has-error';
         });
 
         function createValidator(obj, factory) {
@@ -36,8 +41,8 @@ ValidatorDirective.prototype = {
             if (!validator)
                 throw new TypeError('validator: unknown validator "' + (obj.name || obj) + '"');
 
-            return function(field) {
-                return validator.fn.call(validator, field, args);
+            return function(field, addError) {
+                return validator.fn.call(validator, field, addError, args);
             };
         }
     }

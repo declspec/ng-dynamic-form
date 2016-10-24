@@ -14,7 +14,9 @@ FieldModelDirective.prototype = {
         var commitViewValue = modelController.$commitViewValue;
 
         modelController.$render = function() {
-            field.setValue(this.$modelValue || this.$viewValue);
+            var value = this.$modelValue || this.$viewValue;
+            if (value || modelController.$dirty)
+                field.setValue(value);
         };
 
         modelController.$commitViewValue = function() {

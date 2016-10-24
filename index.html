@@ -9,22 +9,28 @@
         <link href="//global.curtin.edu.au/template/css/print.css" rel="stylesheet" type="text/css" media="print" />
         <link href="https://global.curtin.edu.au/flow/forms-2.0.1/css/forms.css" rel="stylesheet" type="text/css" />
 
+        <style>
+            .has-error { border: 2px solid red; display: block }
+        </style>
+
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
-        <script type="text/javascript" src="bin/ng-dynamic-form-0.1.0.min.js"></script>
+        <script type="text/javascript" src="bin/ng-dynamic-form-0.1.0.js"></script>
         <script type="text/javascript">
-                angular.module('ng-dynamic-form').controller('TestController', [ '$scope', function($scope) {
-                    $scope.items = [
-                        { id: 'item1', name: 'Item 1' },
-                        { id: 'item2', name: 'Item 2' }
-                    ];
-                }]);
-            </script>
+            angular.module('ng-dynamic-form').controller('TestController', [ '$scope', 'FormBuilder', function($scope, formBuilder) {
+                $scope.form = formBuilder.build();
+
+                $scope.items = [
+                    { id: 'item1', name: 'Item 1' },
+                    { id: 'item2', name: 'Item 2' }
+                ];
+            }]);
+        </script>
     </head>
     <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
 
     <body ng-app="ng-dynamic-form" ng-controller="TestController" id="content">
-        <form dynamic-form state="state" class="flow">
+        <form dynamic-form form="form" class="flow">
             <fieldset>
                 <legend>Dummy Form</legend>
 

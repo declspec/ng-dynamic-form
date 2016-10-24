@@ -1,6 +1,8 @@
 import FieldDirective from './field';
 
-function InputFieldDirective() { };
+function InputFieldDirective(validatorFactory) { 
+    FieldDirective.call(this, validatorFactory);
+};
 
 InputFieldDirective.prototype = Object.create(FieldDirective.prototype, {
     constructor: {

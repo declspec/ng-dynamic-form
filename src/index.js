@@ -1,3 +1,4 @@
+import Form from './models/form';
 import * as Directives from './directives';
 
 // Need to load all the templates upfront
@@ -11,6 +12,8 @@ var inputFieldTemplate = require('./templates/input.html'),
 var libName = 'ng-dynamic-form';
 
 angular.module(libName, [])
+    .service('FormBuilder', FormBuilderService)
+
     .directive('dynamicForm', FormDirectiveFactory)
     .directive('fieldModel', FieldModelDirectiveFactory)
     .directive('fieldMultiModel', FieldMultiModelDirectiveFactory)
@@ -23,6 +26,13 @@ angular.module(libName, [])
     .directive('formFieldTextarea', TextareaFieldDirectiveFactory);
 
 export default libName;
+
+FormBuilderService.$inject = [ '$parse', '$q' ];
+function FormBuilderService($parse, $q) {
+    this.build = function(initialState) {
+        return new Form(initialState, $parse, $q);
+    };
+}
 
 function FormDirectiveFactory() {
     return new Directives.Form();

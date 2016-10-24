@@ -1,9 +1,16 @@
 import EventEmitter from 'event-emitter';
 
-function Field(name, value) {
+function Field(name, value, promise) {
     this.name = name;
+
+    // Internal variables
     this.$$value = value;
     this.$$active = true;
+    this.$$valid = true;
+    this.$$errors = undefined;
+    this.$$validators = undefined;
+    this.$$validationRound = 0;
+    this.$$q = promise;
 }
 
 Field.prototype = extend(EventEmitter.methods, {
@@ -28,6 +35,62 @@ Field.prototype = extend(EventEmitter.methods, {
 
     isActive: function() {
         return this.$$active;
+    },
+
+    isValid: function() {
+        return this.$$valid;
+    },
+
+    getErrors: function() {
+        return this.$$errors;
+    },
+
+    addValidator: function(validator) {
+        if (!this.$$validators)
+            this.$$validators = [ validator ];
+        else
+            this.$$validators.push(validator);
+    },
+
+    $validate: function() {
+        var round = ++this.$$validationRound,
+            allValid = true,
+            self = this,
+            errors = [],
+            promise;
+
+        if (!this.$$validators || this.$$validators.length === 0) 
+            promise = this.$$q.when(true);
+        else {
+            var promises = this.$$validators.map(function(validator) {
+                return validator(self, appendError);
+            });
+
+            promise = this.$$q.all(promises).then(function(results) {
+                for(var i = 0, j = results.length; i < j; ++i) {
+                    if (results[i] !== true) {
+                        allValid = false;
+                        break;
+                    }
+                }
+
+                return allValid;
+            });
+        }
+
+        return promise.then(function(valid) {
+            if (round === self.$$validationRound) {
+                var previous = self.$$valid;
+                self.$$valid = valid;
+                self.$$errors = errors;
+                
+                self.emit('validated', self, previous);
+            }
+        });
+
+        function appendError(err) {
+            errors.push(err);
+        }
     },
     
     // --
@@ -60,6 +123,7 @@ function extend(target, source) {
 
 function triggerValueChanged(field, value) {
     field.emit('change', field, value);
+    field.$validate();
 }
 
 function getType(obj) {

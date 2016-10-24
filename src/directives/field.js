@@ -1,3 +1,5 @@
+import required from '../validators/required';
+
 function FieldDirective() { }
 
 FieldDirective.prototype = {
@@ -25,7 +27,9 @@ FieldDirective.prototype = {
         scope.name = attrs['name'];
         scope.label = attrs['label'] || labelise(scope.name);
         scope.field = ctrls[0].form.getField(scope.name);
+    },
 
+    postLink: function(scope, $element, attrs, ctrls) { 
         if (scope.field && attrs['condition']) {
             ctrls[0].form.addFieldCondition(scope.field, attrs['condition'], function(value) {
                 value ? $element.show('fast') : $element.hide();
@@ -35,10 +39,13 @@ FieldDirective.prototype = {
         if (scope.field && 'function' === typeof(scope.change)) {
             scope.field.on('change', scope.change);
         }
-    },
 
-    postLink: function(scope, $element, attrs, ctrls) { 
-        // Empty stub, can be overriden if needed
+        scope.field.addValidator(required);
+
+        scope.field.on('validated', function(field, previouslyValid) {
+            if (field.isValid() !== previouslyValid)
+                $element[previouslyValid ? 'addClass' : 'removeClass'] ('has-error');
+        });
     }
 };
 

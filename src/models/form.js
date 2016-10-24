@@ -1,9 +1,12 @@
 import Field from './field';
 
-function Form(initialState, parser) {
+function Form(initialState, parser, promise) {
+    this.valid = true;
+
     this.$$fields = {};
     this.$$watchers = {};
     this.$$parser = parser;
+    this.$$q = promise;
 
     this.$init(initialState);
 }
@@ -20,6 +23,10 @@ Form.prototype = {
 
         this.$onFieldToggled = function(field, active) {
             onFieldToggled(self, field, active);
+        };
+
+        this.$onFieldValidated = function(field, previouslyValid) {
+            onFieldValidated(self, field, previouslyValid);
         };
 
         // Initialise fields from state
@@ -92,9 +99,10 @@ Form.prototype = {
 export default Form;
 
 function addField(form, name, value) {
-    var field = new Field(name, value);
+    var field = new Field(name, value, form.$$q);
     field.on('change', form.$onFieldChanged);
     field.on('toggle', form.$onFieldToggled);
+    field.on('validated', form.$onFieldValidated);
     return (form.$$fields[name] = field);
 }
 
@@ -118,4 +126,25 @@ function onFieldToggled(form, field, active) {
     // Fire off the onFieldChanged event handlers as once the
     // active state changes, other listeners will need to be re-run
     onFieldChanged(form, field, field.val());
+}
+
+function onFieldValidated(form, field, previouslyValid) {
+    if (!field.isValid())
+        form.valid = false;
+    else if (!previouslyValid && !form.valid) {
+        // If the field is changing from invalid->valid then we need
+        // to do a more exhaustive check to see if the whole form is
+        // now in a valid state.
+        var fields = form.$$fields,
+            valid = true;
+
+        for(var fieldName in fields) {
+            if (fields.hasOwnProperty(fieldName) && !fields[fieldName].isValid()) {
+                valid = false;
+                break;
+            }                
+        }
+
+        form.valid = valid;
+    }
 }

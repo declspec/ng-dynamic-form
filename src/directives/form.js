@@ -2,8 +2,10 @@ function FormDirective() {}
 
 FormDirective.prototype = {
     restrict: 'AE',
-    scope: { },
-    bindToController: { form: '=' }   
+    scope: { form: '=' },
+    controller: [ '$scope', function($scope) { 
+        this.form = $scope.form;
+    }],
 };
 
 export default FormDirective;
