@@ -4,7 +4,6 @@ function Form(initialState, parser, promise) {
     this.valid = true;
 
     this.$$fields = {};
-    this.$$watchers = {};
     this.$$parser = parser;
     this.$$q = promise;
 
@@ -76,23 +75,13 @@ Form.prototype = {
         };
 
         for(var i = 0, j = dependentFields.length; i < j; ++i) {
-            var fieldName = dependentFields[i];
-            if (!this.$$watchers.hasOwnProperty(fieldName))
-                this.$$watchers[fieldName] = [];
-            this.$$watchers[fieldName].push(conditionalFn);
+            var field = this.getField(dependentFields[i]);
+            field.on('toggle', conditionalFn);
+            field.on('change', conditionalFn);
         }
 
         // Run the condition once to initialise
         conditionalFn();
-    },
-
-    addFieldCondition: function(field, condition, callback) {
-        return this.addCondition(condition, wrapped);
-
-        function wrapped(status) {
-            field.toggle(status);
-            callback(status);
-        }
     }
 };
 
@@ -100,9 +89,6 @@ export default Form;
 
 function addField(form, name, value) {
     var field = new Field(name, value, form.$$q);
-    field.on('change', form.$onFieldChanged);
-    field.on('toggle', form.$onFieldToggled);
-    field.on('validated', form.$onFieldValidated);
     return (form.$$fields[name] = field);
 }
 
@@ -111,9 +97,8 @@ function onFieldChanged(form, field, value) {
 
     // This seems to be a little bit backwards as each field is an EventEmitter
     // so you could just subscribe via 'on' directly.
-    // However, that would rely on the field already being created
-    // at the time that another field requests to watch it, this way allows for
-    // deferred field resolution.
+    // However, that would rely on either the field be created at the time this is run,
+    // or creating
     if (form.$$watchers.hasOwnProperty(field.name)) {
         var handlers = form.$$watchers[field.name];
         for(var i = 0, j = handlers.length; i < j; ++i) {

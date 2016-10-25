@@ -30,14 +30,17 @@ FieldDirective.prototype = {
     },
 
     postLink: function(scope, $element, attrs, ctrls) { 
-        if (scope.field && attrs['condition']) {
-            ctrls[0].form.addFieldCondition(scope.field, attrs['condition'], function(value) {
+        var field = scope.field;
+
+        if (field && attrs['condition']) {
+            ctrls[0].form.addCondition(attrs['condition'], function(value) {
+                field.setActive(value);
                 value ? $element.show('fast') : $element.hide();
             });
         }
 
-        if (scope.field && 'function' === typeof(scope.change)) {
-            scope.field.on('change', scope.change);
+        if (field && typeof(scope.change) === 'function') {
+            field.on('change', scope.change);
         }
 
         scope.field.addValidator(required);

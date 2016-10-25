@@ -23,7 +23,7 @@ Field.prototype = extend(EventEmitter.methods, {
         triggerValueChanged(this, value);
     },
 
-    toggle: function(active) {
+    setActive: function(active) {
         this.$$active = active;
         this.emit('toggle', this, active);
     },
