@@ -46,8 +46,11 @@ FieldDirective.prototype = {
         scope.field.addValidator(required);
 
         scope.field.on('validated', function(field, previouslyValid) {
-            if (field.isValid() !== previouslyValid)
-                $element[previouslyValid ? 'addClass' : 'removeClass'] ('has-error');
+            $element[field.isValid() ? 'removeClass' : 'addClass']('has-error');
+        });
+
+        scope.field.on('change', function() {
+            $element.removeClass('has-error');
         });
     }
 };

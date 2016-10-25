@@ -26,6 +26,10 @@ ValidatorDirective.prototype = {
                 $element[previouslyValid ? 'addClass' : 'removeClass'] = 'has-error';
         });
 
+        field.on('change', function(field) {
+            $element.removeClass('has-error');
+        });
+
         function createValidator(obj, factory) {
             var args = null;
  

@@ -7,9 +7,12 @@ function Field(name, value, promise) {
     this.$$value = value;
     this.$$active = true;
     this.$$valid = true;
+    this.$$validated = false;
     this.$$errors = undefined;
     this.$$validators = undefined;
-    this.$$validationRound = 0;
+    this.$$asyncValidators = undefined;
+    this.$$deferredValidation = undefined;
+    this.$$runningValidations = 0;
     this.$$q = promise;
 }
 
@@ -20,7 +23,8 @@ Field.prototype = extend(EventEmitter.methods, {
 
     setValue: function(value) {
         this.$$value = value;
-        triggerValueChanged(this, value);
+        this.$$validated = false;
+        this.emit('change', this, value);
     },
 
     setActive: function(active) {
@@ -28,17 +32,23 @@ Field.prototype = extend(EventEmitter.methods, {
         this.emit('toggle', this, active);
     },
 
-    clear: function() {
-        this.$$value = null;
-        triggerValueChanged(this, this.$$value);
-    },
-
     isActive: function() {
         return this.$$active;
     },
 
     isValid: function() {
-        return this.$$valid;
+        return this.$$validated && this.$$valid;
+    },
+
+    isValidated: function() {
+        return this.$$validated;
+    },
+
+    hasValidation: function() {
+        // Shortcut to allow callers to figure out if they need to call 'validate' at
+        // all, as it can be a bit expensive and dealing with promises sucks.
+        return (this.$$validators && this.$$validators.length > 0)
+            || (this.$$asyncValidators && this.$$asyncValidators.length > 0);
     },
 
     getErrors: function() {
@@ -46,50 +56,67 @@ Field.prototype = extend(EventEmitter.methods, {
     },
 
     addValidator: function(validator) {
-        if (!this.$$validators)
-            this.$$validators = [ validator ];
-        else
-            this.$$validators.push(validator);
+        var key = validator.async ? '$$asyncValidators' : '$$validators';
+
+        if (!this[key])
+            this[key] = [ validator ];
+        else 
+            this[key].push(validator);
     },
 
-    $validate: function() {
-        var round = ++this.$$validationRound,
-            allValid = true,
+    validate: function() {
+        var ref = ++this.$$runningValidations,
             self = this,
-            errors = [],
-            promise;
+            errors = [];
 
-        if (!this.$$validators || this.$$validators.length === 0) 
-            promise = this.$$q.when(true);
-        else {
-            var promises = this.$$validators.map(function(validator) {
-                return validator(self, appendError);
-            });
+        self.emit('validating', self);
 
-            promise = this.$$q.all(promises).then(function(results) {
-                for(var i = 0, j = results.length; i < j; ++i) {
-                    if (results[i] !== true) {
-                        allValid = false;
-                        break;
-                    }
-                }
+        var promise = processSyncValidators(self, appendError) 
+            || processAsyncValidators(self, appendError) 
+            || self.$$q.when(true);
 
-                return allValid;
-            });
+        // TODO: Explore the wisdom of doing this. The $$state property
+        // isn't guaranteed by angular and may disappear in future versions
+        // However it prevents more expensive promise chaining if (for example)
+        // only synchronous validators are used (or no validators at all)
+        if (promise.$$state.status !== 0) {
+            completePromise(promise.$$state.value);
+            return promise;
         }
 
-        return promise.then(function(valid) {
-            if (round === self.$$validationRound) {
-                var previous = self.$$valid;
-                self.$$valid = valid;
-                self.$$errors = errors;
-                
-                self.emit('validated', self, previous);
-            }
+        if (!self.$$deferredValidation)
+            self.$$deferredValidation = self.$$q.defer();
+
+        promise.then(function(valid) {
+            // If the completed validation round is still the latest validation
+            // round then update the field state, otherwise do nothing.
+            if (ref === self.$$runningValidations) 
+                completePromise(valid);        
+        }, function(err) {
+            if (ref === self.$$runningValidations)
+                self.$$deferredValidation.reject(err);
         });
+
+        return self.$$deferredValidation.promise;
 
         function appendError(err) {
             errors.push(err);
+        }
+
+        function completePromise(valid) {
+            var previous = self.$$valid,
+                deferred = self.$$deferredValidation;
+
+            self.$$valid = valid;
+            self.$$errors = errors;
+            self.$$runningValidations = 0;
+            self.$$deferredValidation = null;
+            self.$$validated = true;
+            
+            // Emit the event and then resolve the promise.
+            // This could be a bit racy.
+            self.emit('validated', self, previous, ref);  
+            if (deferred) deferred.resolve(self);          
         }
     },
     
@@ -121,9 +148,37 @@ function extend(target, source) {
     return target;
 }
 
-function triggerValueChanged(field, value) {
-    field.emit('change', field, value);
-    field.$validate();
+function processSyncValidators(field, appendError) {
+    var promise = null;
+
+    if (field.$$validators && field.$$validators.length > 0) {
+        for(var i = 0, j = field.$$validators.length; i < j; ++i) {
+            if (!field.$$validators[i](field, appendError)) {
+                promise = field.$$q.when(false);
+                break;
+            }
+        }
+    }
+
+    return promise;
+}
+
+function processAsyncValidators(field, appendError) {
+    if (!field.$$asyncValidators || field.$$asyncValidators.length === 0) 
+        return null;
+
+    var promises = field.$$asyncValidators.map(function(validator) {
+        return validator(field, appendError);
+    });
+
+    return field.$$q.all(promises).then(function(results) {
+        for(var i = 0, j = results.length; i < j; ++i) {
+            if (results[i] !== true)
+                return false;
+        }
+
+        return true;
+    });
 }
 
 function getType(obj) {
@@ -169,7 +224,7 @@ function matches(target, to) {
     case 'regexp':
         return to.test(target);
     case 'array':
-        if (!Array.isArray(target))
+        if (!Array.isArray(target) || target.length < to.length)
             return false;
 
         for(var i = 0, j = to.length; i < j; ++i) {

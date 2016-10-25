@@ -2,6 +2,7 @@ import Field from './field';
 
 function Form(initialState, parser, promise) {
     this.valid = true;
+    this.validating = 0;
 
     this.$$fields = {};
     this.$$parser = parser;
@@ -15,17 +16,12 @@ Form.prototype = {
         var self = this;
         self.$$state = state || {};
 
-        // Bind private functions
-        this.$onFieldChanged = function(field, value) {
-            onFieldChanged(self, field, value);
+        this.$onFieldValidating = function(field) {
+            onFieldValidating(self, field);
         };
 
-        this.$onFieldToggled = function(field, active) {
-            onFieldToggled(self, field, active);
-        };
-
-        this.$onFieldValidated = function(field, previouslyValid) {
-            onFieldValidated(self, field, previouslyValid);
+        this.$onFieldValidated = function(field, previouslyValid, totalValidations) {
+            onFieldValidated(self, field, previouslyValid, totalValidations);
         };
 
         // Initialise fields from state
@@ -35,6 +31,32 @@ Form.prototype = {
                     addField(this, prop, state[prop]);
             }   
         }
+    },
+
+    validate: function() {
+        var promises = [],
+            fields = this.$$fields,
+            self = this;
+
+        for(var fieldName in fields) {
+            if (fields.hasOwnProperty(fieldName)) {
+                var field = fields[fieldName];
+                // Only validate fields that haven't been validated yet and are currently active.
+                // This saves on redundantly making expensive validation calls
+                if (!field.isValidated() && field.isActive() && field.hasValidation()) {
+                    promises.push(fields[fieldName].validate());
+                }
+            }
+        }
+
+        // All validation has already run, just return an immediately resolved promise
+        if (promises.length === 0)
+            return this.$$q.when(self);
+
+        // Wait for all the validation promises to run
+        return this.$$q.all(promises).then(function() {
+            return self;
+        });
     },
 
     valueOf: function(fieldName) {
@@ -89,31 +111,21 @@ export default Form;
 
 function addField(form, name, value) {
     var field = new Field(name, value, form.$$q);
+    field.on('validating', form.$onFieldValidating);
+    field.on('validated', form.$onFieldValidated);
     return (form.$$fields[name] = field);
 }
 
-function onFieldChanged(form, field, value) {
-    form.$$state[field.name] = value;
-
-    // This seems to be a little bit backwards as each field is an EventEmitter
-    // so you could just subscribe via 'on' directly.
-    // However, that would rely on either the field be created at the time this is run,
-    // or creating
-    if (form.$$watchers.hasOwnProperty(field.name)) {
-        var handlers = form.$$watchers[field.name];
-        for(var i = 0, j = handlers.length; i < j; ++i) {
-            handlers[i](field);
-        }
-    }
+function onFieldValidating(form, field) {
+    ++form.validating;
 }
 
-function onFieldToggled(form, field, active) {
-    // Fire off the onFieldChanged event handlers as once the
-    // active state changes, other listeners will need to be re-run
-    onFieldChanged(form, field, field.val());
-}
+function onFieldValidated(form, field, previouslyValid, totalValidations) {
+    // Due to async validators, the total number of 'validated' events does not always match
+    // 1-1 with the number of 'validating' events, the totalValidations argument matches
+    // the number of 'validating' events since the last 'validated' event.
+    form.validating -= totalValidations;
 
-function onFieldValidated(form, field, previouslyValid) {
     if (!field.isValid())
         form.valid = false;
     else if (!previouslyValid && !form.valid) {
@@ -124,10 +136,14 @@ function onFieldValidated(form, field, previouslyValid) {
             valid = true;
 
         for(var fieldName in fields) {
-            if (fields.hasOwnProperty(fieldName) && !fields[fieldName].isValid()) {
+            if (!fields.hasOwnProperty(fieldName))
+                continue;
+                
+            var field = fields[fieldName];
+            if (field.isActive() && !field.isValid()) {
                 valid = false;
                 break;
-            }                
+            }               
         }
 
         form.valid = valid;

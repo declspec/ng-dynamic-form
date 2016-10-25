@@ -20,6 +20,12 @@
             angular.module('ng-dynamic-form').controller('TestController', [ '$scope', 'FormBuilder', function($scope, formBuilder) {
                 $scope.form = formBuilder.build();
 
+                $scope.submit = function() {
+                    $scope.form.validate().then(function(form) {
+                        alert('validation completed: ' + form.valid);
+                    });
+                };
+
                 $scope.items = [
                     { id: 'item1', name: 'Item 1' },
                     { id: 'item2', name: 'Item 2' }
@@ -30,7 +36,9 @@
     <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
 
     <body ng-app="ng-dynamic-form" ng-controller="TestController" id="content">
-        <form dynamic-form form="form" class="flow">
+        <div ng-if="form.validating">I am validating</div>
+
+        <form dynamic-form form="form" class="flow" ng-submit="submit()">
             <fieldset>
                 <legend>Dummy Form</legend>
 
@@ -51,6 +59,7 @@
                 <form-field-readonly name="bar" condition="![bar].empty()"></form-field-readonly>
 
                 <div>{{state|json}}</div>
+                <button type="submit">Go</button>
             </fieldset>
         </form>
     </body>
