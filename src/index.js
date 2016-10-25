@@ -1,5 +1,9 @@
 import Form from './models/form';
+import ValidatorFactoryProvider from './validators/validator-factory';
+
 import * as Directives from './directives';
+import * as Validators from './validators';
+
 
 // Need to load all the templates upfront
 var inputFieldTemplate = require('./templates/input.html'),
@@ -11,8 +15,9 @@ var inputFieldTemplate = require('./templates/input.html'),
 
 var libName = 'ng-dynamic-form';
 
-angular.module(libName, [])
+var lib = angular.module(libName, [])
     .service('FormBuilder', FormBuilderService)
+    .provider('ValidatorFactory', ValidatorFactoryProvider)
 
     .directive('dynamicForm', FormDirectiveFactory)
     .directive('fieldModel', FieldModelDirectiveFactory)
@@ -24,6 +29,11 @@ angular.module(libName, [])
     .directive('formFieldRadiolist', RadioListFieldDirectiveFactory)
     .directive('formFieldReadonly', ReadonlyFieldDirectiveFactory)
     .directive('formFieldTextarea', TextareaFieldDirectiveFactory);
+
+// Configure validators
+lib.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
+    validatorFactoryProvider.register('required', Validators.Required);
+}]);
 
 export default libName;
 

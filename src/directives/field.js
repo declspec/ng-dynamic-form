@@ -1,10 +1,8 @@
-import required from '../validators/required';
-
 function FieldDirective() { }
 
 FieldDirective.prototype = {
     restrict: 'EA',
-    scope: { change: '&' },
+    scope: { change: '&', validators: '=' },
     transclude: true,
     require: ['^^dynamicForm'],
     link: {
@@ -30,28 +28,34 @@ FieldDirective.prototype = {
     },
 
     postLink: function(scope, $element, attrs, ctrls) { 
+        if (!scope.field)
+            return;
+
         var field = scope.field;
 
-        if (field && attrs['condition']) {
+        if (attrs['condition']) {
             ctrls[0].form.addCondition(attrs['condition'], function(value) {
                 field.setActive(value);
                 value ? $element.show('fast') : $element.hide();
             });
         }
 
-        if (field && typeof(scope.change) === 'function') {
+        // Set up the 'change' logic so that the scope can listen to
+        // field changes.
+        if (typeof(scope.change) === 'function') 
             field.on('change', scope.change);
+
+        // Configure any requested validators validators.
+        var validatorMetadata = scope.validators,
+            createValidator = ctrls[0].createValidator;
+
+        if (validatorMetadata && !Array.isArray(validatorMetadata))
+            field.addValidator(createValidator(validator));
+        else if (Array.isArray(validatorMetadata) && validatorMetadata.length > 0) {
+            for(var i = 0, j = validatorMetadata.length; i < j; ++i) {
+                field.addValidator(createValidator(validatorMetadata[i]));
+            }
         }
-
-        scope.field.addValidator(required);
-
-        scope.field.on('validated', function(field, previouslyValid) {
-            $element[field.isValid() ? 'removeClass' : 'addClass']('has-error');
-        });
-
-        scope.field.on('change', function() {
-            $element.removeClass('has-error');
-        });
     }
 };
 

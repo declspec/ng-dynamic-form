@@ -37,7 +37,7 @@ Field.prototype = extend(EventEmitter.methods, {
     },
 
     isValid: function() {
-        return this.$$validated && this.$$valid;
+        return (this.$$validated || !this.hasValidation()) && this.$$valid;
     },
 
     isValidated: function() {
@@ -68,8 +68,6 @@ Field.prototype = extend(EventEmitter.methods, {
         var ref = ++this.$$runningValidations,
             self = this,
             errors = [];
-
-        self.emit('validating', self);
 
         var promise = processSyncValidators(self, appendError) 
             || processAsyncValidators(self, appendError) 
@@ -116,7 +114,7 @@ Field.prototype = extend(EventEmitter.methods, {
             // Emit the event and then resolve the promise.
             // This could be a bit racy.
             self.emit('validated', self, previous, ref);  
-            if (deferred) deferred.resolve(self);          
+            if (deferred) deferred.resolve(valid);          
         }
     },
     

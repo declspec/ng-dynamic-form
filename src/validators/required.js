@@ -1,8 +1,12 @@
-/*
+
 export default function required(field, addError) {
-    return true;
+    if (!field.empty())
+        return true;
+
+    addError('This field is required');
+    return false;
 }
-*/
+/*
 required.async = true;
 export default required;
 
@@ -22,4 +26,4 @@ function required(field, addError) {
             callback = fn;
         }
     };
-}
+}*/

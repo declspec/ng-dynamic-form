@@ -21,8 +21,10 @@
                 $scope.form = formBuilder.build();
 
                 $scope.submit = function() {
-                    $scope.form.validate().then(function(form) {
-                        alert('validation completed: ' + form.valid);
+                    $scope.form.validate().then(function(valid) {
+                        if (valid) {
+                            alert('valid');
+                        }
                     });
                 };
 
@@ -42,7 +44,7 @@
             <fieldset>
                 <legend>Dummy Form</legend>
 
-                <form-field-input name="name" type="text">
+                <form-field-input name="name" type="text" validators="['required']">
                     <p class="hint plain bold">Text entered into this field is automatically 
                         inserted into communication with the student. 
                         Please be mindful of the language used as the 
