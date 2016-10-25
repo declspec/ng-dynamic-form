@@ -20,6 +20,10 @@ Form.prototype = {
             onFieldChanged(self, field, value);
         };
 
+        this.$onFieldValidated = function(field, previouslyValid) {
+            onFieldValidated(self, field, previouslyValid);
+        };
+
         // Initialise fields from state
         if (typeof(state) === 'object') {
             for(var prop in state) {
@@ -30,7 +34,7 @@ Form.prototype = {
     },
 
     validate: function() {
-        var promises = [],
+        var pendingValidations = [],
             fields = this.$$fields,
             self = this;
 
@@ -42,13 +46,13 @@ Form.prototype = {
                 // validateFormField returns null when the field doesn't
                 // require any sort of validation. 
                 if (promise !== null)
-                    promises.push(promise);
+                    pendingValidations.push(promise);
             }
         }
 
         // Wait for all the validation promises to run
-        return this.$$q.all(promises).then(function(results) {
-            return validateForm(self);
+        return this.$$q.all(pendingValidations).then(function(results) {
+            return (self.valid = isFormValid(self));
         });
     },
 
@@ -81,22 +85,22 @@ Form.prototype = {
             fields = this.$$fields,
             lastValue;
 
-        var conditionalFn = function() {
+        for(var i = 0, j = dependentFields.length; i < j; ++i) {
+            var field = this.getField(dependentFields[i]);
+            field.on('toggle', checkCondition);
+            field.on('change', checkCondition);
+        }
+
+        // Run the condition once to initialise
+        checkCondition();
+
+        function checkCondition() {
             var result = parsedExpr(fields) || false;
             if (result !== lastValue) {
                 lastValue = result;
                 callback(result);
             }
-        };
-
-        for(var i = 0, j = dependentFields.length; i < j; ++i) {
-            var field = this.getField(dependentFields[i]);
-            field.on('toggle', conditionalFn);
-            field.on('change', conditionalFn);
         }
-
-        // Run the condition once to initialise
-        conditionalFn();
     }
 };
 
@@ -105,7 +109,22 @@ export default Form;
 function addField(form, name, value) {
     var field = new Field(name, value, form.$$q);
     field.on('change', form.$onFieldChanged);
+    field.on('validated', form.$onFieldValidated);
     return (form.$$fields[name] = field);
+}
+
+function isFormValid(form) {
+    var fields = form.$$fields;
+    
+    for(var fieldName in fields) {
+        if (fields.hasOwnProperty(fieldName)) {
+            var field = fields[fieldName];
+            if (field.isActive() && !field.isValid()) 
+                return false;
+        }            
+    }
+
+    return true;
 }
 
 function validateFormField(form, field) {
@@ -118,26 +137,19 @@ function validateFormField(form, field) {
 
     return field.validate().then(function(valid) {
         --form.validating;
-        
-        if (!valid)
-            form.valid = false;
-        else if (!form.validating && !form.valid) 
-            form.valid = validateForm(form);        
+        updateValidity(form, valid);    
     });
 }
 
-function validateForm(form) {
-    var fields = form.$$fields;
-    
-    for(var fieldName in fields) {
-        if (fields.hasOwnProperty(fieldName)) {
-            var field = fields[fieldName];
-            if (field.isActive() && !field.isValid()) 
-                return false;
-        }            
-    }
+function updateValidity(form, fieldValidity) {
+    if (!fieldValidity)
+        form.valid = false;
+    else if (!form.validating && !form.fieldValidity) 
+        form.valid = isFormValid(form);    
+}
 
-    return true;
+function onFieldValidated(form, field) {
+    updateValidity(form, field.isValid());
 }
 
 function onFieldChanged(form, field, value) {
