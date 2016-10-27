@@ -7,30 +7,23 @@ function Form(initialState, parser, promise) {
     this.$$fields = {};
     this.$$parser = parser;
     this.$$q = promise;
+    this.$$state = Object.assign({}, initialState);
 
-    this.$init(initialState);
+    this.$init();
 }
 
 Form.prototype = {
     $init: function(state) {
         var self = this;
-        self.$$state = state || {};
 
-        this.$onFieldChanged = function(field, value) {
-            onFieldChanged(self, field, value);
+        // Create local bindings
+        this.$onFieldChanged = function(field) {
+            onFieldChanged(self, field);
         };
 
         this.$onFieldValidated = function(field, previouslyValid) {
             onFieldValidated(self, field, previouslyValid);
         };
-
-        // Initialise fields from state
-        if (typeof(state) === 'object') {
-            for(var prop in state) {
-                if (state.hasOwnProperty(prop))
-                    addField(this, prop, state[prop]);
-            }   
-        }
     },
 
     validate: function() {
@@ -52,12 +45,18 @@ Form.prototype = {
 
         // Wait for all the validation promises to run
         return this.$$q.all(pendingValidations).then(function(results) {
-            return (self.valid = isFormValid(self));
+            return self.valid;
         });
     },
 
+    getState: function() {
+        return this.$$state;
+    },
+
     valueOf: function(fieldName) {
-        return this.$$state[fieldName];
+        return this.$$fields.hasOwnProperty(fieldName)
+            ? this.$$fields[fieldName].val()
+            : undefined;
     },
 
     getField: function(name) {
@@ -106,11 +105,49 @@ Form.prototype = {
 
 export default Form;
 
-function addField(form, name, value) {
-    var field = new Field(name, value, form.$$q);
+function addField(form, name) {
+    // Attempt to find the value in the state
+    var value = getStateValue(form.$$state, name),
+        field = new Field(name, value, form.$$q);
+
     field.on('change', form.$onFieldChanged);
-    field.on('validated', form.$onFieldValidated);
+    field.on('validate', form.$onFieldValidated);
+
     return (form.$$fields[name] = field);
+}
+
+function getStateValue(state, fieldName) {
+    var bits = fieldName.split('.'),
+        pos = 0,
+        len = bits.length;
+
+    while(pos < len && state != null) {
+        state = state.hasOwnProperty(bits[pos])
+            ? state[bits[pos]]
+            : null;
+        pos++;
+    }
+
+    return state;
+}
+
+function setStateValue(state, fieldName, value) {
+    var bits = fieldName.split('.'),
+        pos = 0,
+        len = bits.length - 1;
+    
+    // Ensure the hierarchy exists
+    while(pos < len) {
+        var name = bits[pos];
+        state = !state.hasOwnProperty(name)
+            ? (state[name] = {})
+            : state[name];
+        
+        if (typeof(state) !== 'object' || state[name] === null)
+            throw new Error('attempting to overwrite existing non-object state property');
+    }
+    
+    state[bits[len]] = value;
 }
 
 function isFormValid(form) {
@@ -144,7 +181,7 @@ function validateFormField(form, field) {
 function updateValidity(form, fieldValidity) {
     if (!fieldValidity)
         form.valid = false;
-    else if (!form.validating && !form.fieldValidity) 
+    else if (!form.validating && !form.valid) 
         form.valid = isFormValid(form);    
 }
 
@@ -152,6 +189,7 @@ function onFieldValidated(form, field) {
     updateValidity(form, field.isValid());
 }
 
-function onFieldChanged(form, field, value) {
+function onFieldChanged(form, field) {
+    setStateValue(form.$$state, field.name, field.val());
     validateFormField(form, field);
 }

@@ -1,7 +1,7 @@
 <dt><label ng-bind="::label"></label></dt>
 <dd>
 	<div ng-transclude></div>
-	<ul class="checkbox">
+	<ul class="checkbox" validation-for="{{::name}}">
 		<li ng-repeat="item in items track by item[valueProperty]">
             <input type="checkbox" ng-attr-id="{{::name + '_' + $index }}" ng-attr-name="{{::name}}" field-multi-model="{{::name}}" value="{{::item[valueProperty]}}" />
 			<label ng-attr-for="{{::name + '_' + $index }}" ng-bind="::item[displayProperty]"></label>

@@ -2,8 +2,11 @@ function FormDirective() {}
 
 FormDirective.prototype = {
     restrict: 'AE',
-    scope: { form: '=' },
+    scope: { form: '=dynamicForm' },
     controller: [ '$scope', 'ValidatorFactory', function($scope, validatorFactory) { 
+        if (!$scope.form)
+            throw new TypeError('dynamic-form: invalid value specified for form');
+
         this.form = $scope.form;
 
         // todo: look at where else to put this. Doing it per-field directive

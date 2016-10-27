@@ -20,6 +20,7 @@ var lib = angular.module(libName, [])
     .provider('ValidatorFactory', ValidatorFactoryProvider)
 
     .directive('dynamicForm', FormDirectiveFactory)
+    .directive('validationFor', ValidationForDirectiveFactory)
     .directive('fieldModel', FieldModelDirectiveFactory)
     .directive('fieldMultiModel', FieldMultiModelDirectiveFactory)
 
@@ -32,7 +33,7 @@ var lib = angular.module(libName, [])
 
 // Configure validators
 lib.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
-    validatorFactoryProvider.register('required', Validators.Required);
+    validatorFactoryProvider.register('required', false, Validators.Required);
 }]);
 
 export default libName;
@@ -42,6 +43,11 @@ function FormBuilderService($parse, $q) {
     this.build = function(initialState) {
         return new Form(initialState, $parse, $q);
     };
+}
+
+ValidationForDirectiveFactory.$inject = [ '$compile' ];
+function ValidationForDirectiveFactory(compiler) {
+    return new Directives.ValidationFor(compiler);
 }
 
 function FormDirectiveFactory() {

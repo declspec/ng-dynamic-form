@@ -5,6 +5,7 @@ import ReadonlyField from './readonly-field';
 import FieldModel from './field-model';
 import FieldMultiModel from './field-multi-model';
 import ListField from './list-field';
+import ValidationFor from './validation-for';
 
 export {
     Field,
@@ -13,5 +14,6 @@ export {
     ReadonlyField,
     FieldModel,
     FieldMultiModel,
-    ListField
+    ListField,
+    ValidationFor
 };

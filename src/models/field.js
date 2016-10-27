@@ -113,7 +113,7 @@ Field.prototype = extend(EventEmitter.methods, {
             
             // Emit the event and then resolve the promise.
             // This could be a bit racy.
-            self.emit('validated', self, previous);  
+            self.emit('validate', self, previous);  
             if (deferred) deferred.resolve(valid);          
         }
     },

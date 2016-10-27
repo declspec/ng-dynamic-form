@@ -10,7 +10,9 @@
         <link href="https://global.curtin.edu.au/flow/forms-2.0.1/css/forms.css" rel="stylesheet" type="text/css" />
 
         <style>
-            .has-error { border: 1px solid red; display: block }
+            .ng-dynamic-form-invalid { border: 1px solid red; }
+            .ng-dynamic-form-errors ul { margin: 0; padding: 0 }
+            .ng-dynamic-form-errors ul li { color: red; list-style-type: none; margin: 3px 0; }
         </style>
 
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -53,15 +55,15 @@
                 </form-field-input>
 
                 <form-field-input name="bar" type="text" condition="[check].matches(['item1','item2'])"></form-field-input>
-                <form-field-select name="item" items="items" condition="![bar].empty()"></form-field-select>
-                <form-field-checklist name="check" items="items"></form-field-checklist>
-                <form-field-radiolist name="radio" items="items"></form-field-radiolist>
-                <form-field-textarea name="area"></form-field-textarea>
+                <form-field-select name="item" items="items" condition="![bar].empty()" validators="['required']"></form-field-select>
+                <form-field-checklist name="check" items="items" validators="['required']"></form-field-checklist>
+                <form-field-radiolist name="radio" items="items" validators="['required']"></form-field-radiolist>
+                <form-field-textarea name="area" validators="['required']"></form-field-textarea>
 
                 <form-field-readonly name="bar" condition="![bar].empty()"></form-field-readonly>
 
                 <div>{{state|json}}</div>
-                <button type="submit">Go</button>
+                <button type="submit" ng-disabled="!form.valid || form.validating">Go</button>
             </fieldset>
         </form>
     </body>

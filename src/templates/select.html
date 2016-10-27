@@ -6,5 +6,6 @@
         ng-attr-id="{{::name}}" 
         ng-model="model" 
         ng-options="item[valueProperty] as item[displayProperty] for item in items track by item[valueProperty]"
+        validation-for="{{::name}}"
     ></select>
 </dd>
