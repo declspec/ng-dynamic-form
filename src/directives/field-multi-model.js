@@ -15,9 +15,8 @@ FieldMultiModelDirective.prototype = {
         field.on('change', onUpdate);
 
         $element.on('change', function() {
-            return allowMultiple || this.checked
-                ? scope.$apply(processChange)
-                : null;
+            if (allowMultiple || this.checked)
+                scope.$apply(processChange);
         }); 
 
         function processChange() {
