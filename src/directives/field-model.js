@@ -1,4 +1,4 @@
-function FieldModelDirective() {}
+export default function FieldModelDirective() {}
 
 FieldModelDirective.prototype = { 
     restrict: 'A',
@@ -26,5 +26,3 @@ FieldModelDirective.prototype = {
         };
     }
 };
-
-export default FieldModelDirective;

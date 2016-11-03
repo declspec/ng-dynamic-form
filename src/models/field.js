@@ -1,6 +1,8 @@
-import EventEmitter from 'event-emitter';
+import EventEmitter from 'events';
 
-function Field(name, value, promise) {
+export default function Field(name, value, promise) {
+    EventEmitter.call(this);
+
     this.name = name;
 
     // Internal variables
@@ -11,20 +13,67 @@ function Field(name, value, promise) {
     this.$$errors = undefined;
     this.$$validators = undefined;
     this.$$asyncValidators = undefined;
+
+    // Async handling
     this.$$deferredValidation = undefined;
-    this.$$runningValidations = 0;
+    this.$$deferredValue = undefined;
+    this.$$validationId = 0;
+    this.$$valueId = 0;
     this.$$q = promise;
 }
 
-Field.prototype = extend(EventEmitter.methods, {
+Field.prototype = Object.create(EventEmitter.prototype, {
+    constructor: {
+        value: Field,
+        enumerable: false,
+        writable: true,
+        configurable: true
+    }
+});
+
+extend(Field.prototype, {
     val: function() {
         return this.$$active ? this.$$value : null;
     },
 
     setValue: function(value) {
-        this.$$value = value;
-        this.$$validated = false;
-        this.emit('change', this, value);
+        var deferred;
+
+        // Cache the current deferred value and clear it
+        if (self.$$deferredValue) {
+            deferred = self.$$deferredValue;
+            self.$$deferredValue = null;
+        }
+
+        if (this.$$value !== value) {
+            this.$$value = value;
+            this.$$validated = false;
+            this.emit('change', this, value);
+        }
+
+        // Resolve the pending promise if needed
+        if (deferred) deferred.resolve(value);
+    },
+
+    setValueAsync: function(future) {
+        if (!future || typeof(future) !== 'object' || typeof(future.then) !== 'function')
+            throw new TypeError('"future" must be a valid "thenable" promise');
+
+        var ref = ++this.$$valueId,
+            self = this;
+
+        if (!self.$$deferredValue)
+            self.$$deferredValue = self.$$q.defer();
+
+        // Hook in to the future and update the value if it's still the 
+        // latest update.
+        future.then(function(value) {
+            // setValue will clean up and resolve the deferred.
+            if (ref === self.$$valueId) 
+                self.setValue(value);
+        });
+
+        return self.$$deferredValue.promise;
     },
 
     setActive: function(active) {
@@ -65,13 +114,13 @@ Field.prototype = extend(EventEmitter.methods, {
     },
 
     validate: function() {
-        var ref = ++this.$$runningValidations,
+        var ref = ++this.$$validationId,
             self = this,
             errors = [];
 
-        var promise = processSyncValidators(self, appendError) 
-            || processAsyncValidators(self, appendError) 
-            || self.$$q.when(true);
+        var promise = self.$$deferredValue 
+            ? self.$$deferredValue.promise.then(run)
+            : run();
 
         // TODO: Explore the wisdom of doing this. The $$state property
         // isn't guaranteed by angular and may disappear in future versions
@@ -88,10 +137,10 @@ Field.prototype = extend(EventEmitter.methods, {
         promise.then(function(valid) {
             // If the completed validation round is still the latest validation
             // round then update the field state, otherwise do nothing.
-            if (ref === self.$$runningValidations) 
+            if (ref === self.$$validationId) 
                 completePromise(valid);        
         }, function(err) {
-            if (ref === self.$$runningValidations)
+            if (ref === self.$$validationId)
                 self.$$deferredValidation.reject(err);
         });
 
@@ -101,13 +150,18 @@ Field.prototype = extend(EventEmitter.methods, {
             errors.push(err);
         }
 
+        function run() {
+            return processSyncValidators(self, appendError) 
+                || processAsyncValidators(self, appendError) 
+                || self.$$q.when(true);
+        }
+
         function completePromise(valid) {
             var previous = self.$$valid,
                 deferred = self.$$deferredValidation;
 
             self.$$valid = valid;
             self.$$errors = errors;
-            self.$$runningValidations = 0;
             self.$$deferredValidation = null;
             self.$$validated = true;
             
@@ -137,11 +191,13 @@ Field.prototype = extend(EventEmitter.methods, {
     }
 });
 
-export default Field;
+// --
+// Private functions
+// --
 
 function extend(target, source) {
-    var keys = Object.keys(source);
-    for(var k = keys.length-1; k >= 0; --k)
+    var keys = Object.keys(source), k = keys.length;
+    while(--k >= 0)
         target[keys[k]] = source[keys[k]];
     return target;
 }

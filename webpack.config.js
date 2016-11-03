@@ -19,10 +19,6 @@ module.exports = {
     module: {
         loaders: [
             { 
-                test: /\.html$/, 
-                loader: 'ngtemplate?relativeTo=src/&prefix=ng-dynamic-form-!html' 
-            },
-            { 
                 test: /\.js$/,
                 exclude: /node_modules/,
                 loader: 'babel',
@@ -37,7 +33,14 @@ module.exports = {
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,
             minimize: true,
-            mangle: true
+            mangle: {
+                screw_ie8: true,
+                keep_fnames: false
+            },
+            compress: {
+                screw_ie8: true,
+                warnings: false
+            }
         })
     ]
 };
