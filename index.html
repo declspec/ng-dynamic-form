@@ -20,7 +20,56 @@
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
         <script type="text/javascript" src="bin/ng-dynamic-form-0.1.0.js"></script>
         <script type="text/javascript">
-            angular.module('ng-dynamic-form').controller('TestController', [ '$scope', 'FormBuilder', function($scope, formBuilder) {
+            var app = angular.module('test-app', [ 'ng-dynamic-form' ]);
+
+            app.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
+                validatorFactoryProvider.register('valid-user', function(field, addError) {
+                    var val = field.val();
+                    if (val && !val.hasOwnProperty('email')) {
+                        addError('Invalid Curtin ID provided');
+                        return false;
+                    }
+                    return true;
+                });
+            }]);
+
+            app.directive('curtinPersonFor', function() {
+                return {
+                    restrict: 'A',
+                    require: [ '^^dynamicForm', 'curtinPersonFor' ],
+                    controllerAs: 'ctrl',
+                    template: '<input type="text" ng-model="ctrl.curtinId" ng-attr-id="{{::ctrl.field.name}}" /><button type="button" ng-click="ctrl.update()">Validate</button>',
+                    controller:  [ '$timeout', function(timeout) {
+                        this.curtinId = '';
+
+                        this.update = () => {
+                            if (this.field) {
+                                var curtinId = this.curtinId;
+                                this.field.setValueAsync(timeout(function() {
+                                    var obj = { curtinId: curtinId };
+                                    if (obj.curtinId.length === 7) {
+                                        obj.email = 'test@example.com';
+                                        obj.fullName = 'Jason Larke';
+                                    }
+
+                                    return obj;
+                                }, 10000));
+                            }
+                        };
+                    }],
+                    link: function(scope, $element, attrs, ctrls) {
+                        var formCtrl = ctrls[0],
+                            selfCtrl = ctrls[1];
+                        
+                        if (!attrs['curtinPersonFor'])
+                            throw new TypeError('curtin-person-for: missing required attribute "curtin-person-for"');
+
+                        selfCtrl.field = formCtrl.form.getField(attrs['curtinPersonFor']);
+                    }
+                }
+            });
+
+            app.controller('TestController', [ '$scope', 'FormBuilder', function($scope, formBuilder) {
                 $scope.form = formBuilder.build();
 
                 $scope.submit = function() {
@@ -40,7 +89,7 @@
     </head>
     <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
 
-    <body ng-app="ng-dynamic-form" ng-controller="TestController" id="content">
+    <body ng-app="test-app" ng-controller="TestController" id="content">
         <div ng-if="form.validating">I am validating</div>
 
         <form dynamic-form="form" class="flow" ng-submit="submit()">
@@ -57,6 +106,14 @@
                     <input field-model="name" ng-attr-id="name" ng-model="name" field-validation-for="name" validators="['required']" />
                     <div field-validation-messages-for="name"></div>
                 </dd>
+
+                <dt><label for="user">Curtin ID</label></dt>
+                <dd>
+                    <div curtin-person-for="user" field-validation-for="user" validators="['required','valid-user']"></div>
+                    <div field-validation-messages-for="user"></div>
+                </dd>
+                
+                <dd field-condition="![user].empty()">{{form.$$state.user.fullName}}</dd>
 
                 <div>{{form.$$state|json}}</div>
                 <button type="submit" ng-disabled="!form.valid || form.validating">Go</button>
