@@ -93,6 +93,15 @@ Form.prototype = {
         // Run the condition once to initialise
         checkCondition();
 
+        // Return a function that can be called to remove the listeners
+        return () => {
+            for(var i = 0, j = dependentFields.length; i < j; ++i) {
+                var field = this.getField(dependentFields[i]);
+                field.off('toggle', checkCondition);
+                field.off('change', checkCondition);
+            }
+        };
+
         function checkCondition() {
             var result = parsedExpr(fields) || false;
             if (result !== lastValue) {
@@ -117,8 +126,8 @@ function addField(form, name) {
 }
 
 function getStateValue(state, fieldName) {
-    var bits = fieldName.split('.'),
-        pos = 0,
+    var pos = 0,
+        bits = fieldName.split('.'),
         len = bits.length;
 
     while(pos < len && state != null) {

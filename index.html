@@ -10,16 +10,66 @@
         <link href="https://global.curtin.edu.au/flow/forms-2.0.1/css/forms.css" rel="stylesheet" type="text/css" />
 
         <style>
-            .ng-dynamic-form-invalid { border: 1px solid red; }
-            .ng-dynamic-form-errors ul { margin: 0; padding: 0 }
-            .ng-dynamic-form-errors ul li { color: red; list-style-type: none; margin: 3px 0; }
+            .df-invalid { border: 1px solid red; }
+            .df-valid { border: 1px solid green; }
+            .df-error-list { margin: 0; padding: 0 }
+            .df-error-list li { color: red; list-style-type: none; margin: 3px 0; }
         </style>
 
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.js"></script>
         <script type="text/javascript" src="bin/ng-dynamic-form-0.1.0.js"></script>
         <script type="text/javascript">
-            angular.module('ng-dynamic-form').controller('TestController', [ '$scope', 'FormBuilder', function($scope, formBuilder) {
+            var app = angular.module('test-app', [ 'ng-dynamic-form' ]);
+
+            app.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
+                validatorFactoryProvider.register('valid-user', function(field, addError) {
+                    var val = field.val();
+                    if (val && !val.hasOwnProperty('email')) {
+                        addError('Invalid Curtin ID provided');
+                        return false;
+                    }
+                    return true;
+                });
+            }]);
+
+            app.directive('curtinPersonFor', function() {
+                return {
+                    restrict: 'A',
+                    require: [ '^^dynamicForm', 'curtinPersonFor' ],
+                    controllerAs: 'ctrl',
+                    template: '<input type="text" ng-model="ctrl.curtinId" ng-attr-id="{{::ctrl.field.name}}" /><button type="button" ng-click="ctrl.update()">Validate</button>',
+                    controller:  [ '$timeout', function(timeout) {
+                        this.curtinId = '';
+
+                        this.update = () => {
+                            if (this.field) {
+                                var curtinId = this.curtinId;
+                                this.field.setValueAsync(timeout(function() {
+                                    var obj = { curtinId: curtinId };
+                                    if (obj.curtinId.length === 7) {
+                                        obj.email = 'test@example.com';
+                                        obj.fullName = 'Jason Larke';
+                                    }
+
+                                    return obj;
+                                }, 10000));
+                            }
+                        };
+                    }],
+                    link: function(scope, $element, attrs, ctrls) {
+                        var formCtrl = ctrls[0],
+                            selfCtrl = ctrls[1];
+                        
+                        if (!attrs['curtinPersonFor'])
+                            throw new TypeError('curtin-person-for: missing required attribute "curtin-person-for"');
+
+                        selfCtrl.field = formCtrl.form.getField(attrs['curtinPersonFor']);
+                    }
+                }
+            });
+
+            app.controller('TestController', [ '$scope', 'FormBuilder', function($scope, formBuilder) {
                 $scope.form = formBuilder.build();
 
                 $scope.submit = function() {
@@ -39,30 +89,33 @@
     </head>
     <!-- TODO: figure out an elegant way to handle chained conditions when the topmost condition changes -->
 
-    <body ng-app="ng-dynamic-form" ng-controller="TestController" id="content">
+    <body ng-app="test-app" ng-controller="TestController" id="content">
         <div ng-if="form.validating">I am validating</div>
 
-        <form dynamic-form form="form" class="flow" ng-submit="submit()">
+        <form dynamic-form="form" class="flow" ng-submit="submit()">
             <fieldset>
                 <legend>Dummy Form</legend>
 
-                <form-field-input name="name" type="text" validators="['required']">
+                <dt><label for="name">Name</label></dt>
+                <dd>
                     <p class="hint plain bold">Text entered into this field is automatically 
                         inserted into communication with the student. 
                         Please be mindful of the language used as the 
                         <strong>student(s) will see this text.</strong>
                     </p>
-                </form-field-input>
+                    <input field-model="name" ng-attr-id="name" ng-model="name" field-validation-for="name" validators="['required']" />
+                    <div field-validation-messages-for="name"></div>
+                </dd>
 
-                <form-field-input name="bar" type="text" condition="[check].matches(['item1','item2'])"></form-field-input>
-                <form-field-select name="item" items="items" condition="![bar].empty()" validators="['required']"></form-field-select>
-                <form-field-checklist name="check" items="items" validators="['required']"></form-field-checklist>
-                <form-field-radiolist name="radio" items="items" validators="['required']"></form-field-radiolist>
-                <form-field-textarea name="area" validators="['required']"></form-field-textarea>
+                <dt><label for="user">Curtin ID</label></dt>
+                <dd>
+                    <div curtin-person-for="user" field-validation-for="user" validators="['required','valid-user']"></div>
+                    <div field-validation-messages-for="user"></div>
+                </dd>
+                
+                <dd field-condition="![user].empty()">{{form.$$state.user.fullName}}</dd>
 
-                <form-field-readonly name="bar" condition="![bar].empty()"></form-field-readonly>
-
-                <div>{{state|json}}</div>
+                <div>{{form.$$state|json}}</div>
                 <button type="submit" ng-disabled="!form.valid || form.validating">Go</button>
             </fieldset>
         </form>
