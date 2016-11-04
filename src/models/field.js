@@ -40,9 +40,9 @@ extend(Field.prototype, {
         var deferred;
 
         // Cache the current deferred value and clear it
-        if (self.$$deferredValue) {
-            deferred = self.$$deferredValue;
-            self.$$deferredValue = null;
+        if (this.$$deferredValue) {
+            deferred = this.$$deferredValue;
+            this.$$deferredValue = null;
         }
 
         if (this.$$value !== value) {
@@ -71,6 +71,12 @@ extend(Field.prototype, {
             // setValue will clean up and resolve the deferred.
             if (ref === self.$$valueId) 
                 self.setValue(value);
+        }, function(err) {
+            if (ref === self.$$valueId && self.$$deferredValue) {
+                var deferred = self.$$deferredValue;
+                self.$$deferredValue = null;
+                deferred.reject(err);
+            }
         });
 
         return self.$$deferredValue.promise;
@@ -140,8 +146,11 @@ extend(Field.prototype, {
             if (ref === self.$$validationId) 
                 completePromise(valid);        
         }, function(err) {
-            if (ref === self.$$validationId)
-                self.$$deferredValidation.reject(err);
+            if (ref === self.$$validationId) {
+                var deferred = self.$$deferredValidation;
+                self.$$deferredValidation = null;
+                if (deferred) deferred.reject(err);
+            }
         });
 
         return self.$$deferredValidation.promise;
