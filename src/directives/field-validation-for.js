@@ -8,6 +8,8 @@ export default function FieldValidationForDirective(validatorFactory) {
 FieldValidationForDirective.prototype = {
     restrict: 'A',
     require: '^^dynamicForm',
+    dependencies: [ 'ValidatorFactory' ],
+    
     link: function(scope, $element, attrs, formCtrl) {
         if (!attrs['fieldValidationFor'] || !attrs['validators'])
             throw new TypeError('validation-form: missing required attribute "' + (attrs['validators'] ? 'field-validation-for' : 'validators') + '"');

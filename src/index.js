@@ -8,14 +8,13 @@ var lib = angular.module('ng-dynamic-form', [])
     .service('FormBuilder', FormBuilderService)
     .provider('ValidatorFactory', ValidatorFactoryProvider)
 
-    .directive('dynamicForm',       () => new Directives.DynamicForm())
-    .directive('fieldModel',        () => new Directives.FieldModel())
-    .directive('fieldMultiModel',   () => new Directives.FieldMultiModel())
-    .directive('fieldCondition',    () => new Directives.FieldCondition())
-    .directive('fieldConditionFor', () => new Directives.FieldConditionFor())
-
-    .directive('fieldValidationFor', FieldValidationForDirectiveFactory)
-    .directive('fieldValidationMessagesFor', () => new Directives.FieldValidationMessagesFor());
+    .directive('dynamicForm', wrap(Directives.DynamicForm))
+    .directive('fieldModel', wrap(Directives.FieldModel))
+    .directive('fieldMultiModel', wrap(Directives.FieldMultiModel))
+    .directive('fieldCondition', wrap(Directives.FieldCondition))
+    .directive('fieldConditionFor', wrap(Directives.FieldConditionFor))
+    .directive('fieldValidationFor', wrap(Directives.FieldValidationFor))
+    .directive('fieldValidationMessagesFor', wrap(Directives.FieldValidationMessagesFor));
     
 // Configure validators
 lib.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
@@ -32,7 +31,13 @@ function FormBuilderService($parse, $q) {
     this.build = state => new Form(state, $parse, $q);
 }
 
-FieldValidationForDirectiveFactory.$inject = [ 'ValidatorFactory' ];
-function FieldValidationForDirectiveFactory(validatorFactory) {
-    return new Directives.FieldValidationFor(validatorFactory);
+function wrap(ctor) {
+    var inject = ctor.dependencies || ctor.prototype.dependencies;
+    if (!inject) 
+        return () => new ctor();
+    else {
+        var factory = function() { return new ctor(...arguments); };
+        factory.$inject = inject;
+        return factory;
+    }
 }
