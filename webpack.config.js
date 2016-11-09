@@ -1,9 +1,11 @@
-var webpack = require('webpack'),
-    pkg = require('./package.json'),
-    libName = 'ng-dynamic-form-' + pkg.version;
+const LIBRARY_NAME = 'ng-dynamic-form';
+
+var webpack = require('webpack');
 
 module.exports = {
     entry: {
+        'ng-dynamic-form': './src/index.js',
+        'ng-dynamic-form.min': './src/index.js'
     },
 
     output: {
@@ -44,5 +46,3 @@ module.exports = {
         })
     ]
 };
-
-module.exports.entry[libName] = module.exports.entry[libName + '.min'] = [ './src/index.js' ];
