@@ -4,8 +4,8 @@ var webpack = require('webpack');
 
 module.exports = {
     entry: {
-        'ng-dynamic-form': './src/index.js',
-        'ng-dynamic-form.min': './src/index.js'
+        'ng-dynamic-form': './index.js',
+        'ng-dynamic-form.min': './index.js'
     },
 
     output: {

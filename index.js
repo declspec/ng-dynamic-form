@@ -1,8 +1,8 @@
-import Form from './models/form';
-import ValidatorFactoryProvider from './validators/validator-factory';
+import Form from './src/models/form';
+import ValidatorFactoryProvider from './src/validators/validator-factory';
 
-import * as Directives from './directives';
-import * as Validators from './validators';
+import * as Directives from './src/directives';
+import * as Validators from './src/validators';
 
 var lib = angular.module('ng-dynamic-form', [])
     .service('FormBuilder', FormBuilderService)
