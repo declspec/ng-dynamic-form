@@ -1,7 +1,7 @@
-export default function required(field, addError) {
+export function RequiredValidator(field, addError) {
     if (!field.empty())
         return true;
 
-    addError('This field is required');
+    addError('%field% is a required field.');
     return false;
 }

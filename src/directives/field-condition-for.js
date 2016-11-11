@@ -1,4 +1,4 @@
-export default function FieldConditionForDirective() { }
+export function FieldConditionForDirective() { }
 
 FieldConditionForDirective.prototype = {
     restrict: 'A',

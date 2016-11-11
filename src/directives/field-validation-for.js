@@ -1,7 +1,7 @@
 const INVALID_CLASS = 'df-invalid';
 const VALID_CLASS   = 'df-valid';
 
-export default function FieldValidationForDirective(validatorFactory) { 
+export function FieldValidationForDirective(validatorFactory) { 
     this.validatorFactory = validatorFactory;
 }
 
@@ -17,6 +17,9 @@ FieldValidationForDirective.prototype = {
         var field = formCtrl.form.getField(attrs['fieldValidationFor']),
             validatorFactory = this.validatorFactory;
 
+        var invalidClass = attrs['invalidClass'] || INVALID_CLASS,
+            validClass = attrs['validClass'] || VALID_CLASS;
+
         var off = scope.$watch(attrs['validators'], (n, o) => {
             // Wait until the value stabilizes and then use it.
             if (typeof(n) !== 'undefined') {
@@ -28,8 +31,8 @@ FieldValidationForDirective.prototype = {
         // TODO: Look at whether this should be in here.
         field.on('validate', f => {
             var valid = f.isValid();
-            $element[valid ? 'addClass' : 'removeClass'](VALID_CLASS);
-            $element[valid ? 'removeClass' : 'addClass'](INVALID_CLASS);
+            $element[valid ? 'addClass' : 'removeClass'](validClass);
+            $element[valid ? 'removeClass' : 'addClass'](invalidClass);
         });
     }
 };

@@ -1,4 +1,4 @@
-export default function FieldMultiModelDirective() {}
+export function FieldMultiModelDirective() {}
 
 FieldMultiModelDirective.prototype = {
     restrict: 'A',

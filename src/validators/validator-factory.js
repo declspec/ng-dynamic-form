@@ -1,4 +1,4 @@
-export default function ValidatorFactoryProvider() {
+export function ValidatorFactoryProvider() {
     var validators = {};
 
     this.register = function(name, isAsync, validatorFn) {

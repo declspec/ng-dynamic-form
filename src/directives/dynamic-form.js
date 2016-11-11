@@ -1,4 +1,4 @@
-export default function DynamicFormDirective() {}
+export function DynamicFormDirective() {}
 
 DynamicFormDirective.prototype = {
     restrict: 'A',

@@ -122,6 +122,7 @@ extend(Field.prototype, {
     validate: function() {
         var ref = ++this.$$validationId,
             self = this,
+            label = this.label || labelise(this.name),
             errors = [];
 
         var promise = self.$$deferredValue 
@@ -156,6 +157,8 @@ extend(Field.prototype, {
         return self.$$deferredValidation.promise;
 
         function appendError(err) {
+            if (typeof(err) === 'string')
+                err = err.replace('%field%', label);
             errors.push(err);
         }
 
@@ -203,6 +206,14 @@ extend(Field.prototype, {
 // --
 // Private functions
 // --
+
+function labelise(name) {
+    var label = name.replace(/([A-Z]+)/g, ' $1')
+        .replace(/\W+/g, ' ')
+        .replace(/\s{2,}/g, ' ');
+
+    return label[0].toUpperCase() + label.substring(1);
+}
 
 function extend(target, source) {
     var keys = Object.keys(source), k = keys.length;

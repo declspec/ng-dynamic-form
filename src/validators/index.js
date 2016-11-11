@@ -1,5 +1,1 @@
-import Required from './required';
-
-export {
-    Required
-};
+export * from './required';

@@ -1,4 +1,4 @@
-export default function FieldConditionDirective() { }
+export function FieldConditionDirective() { }
 
 FieldConditionDirective.prototype = {
     restrict: 'A',
