@@ -134,7 +134,7 @@ extend(Field.prototype, {
         // However it prevents more expensive promise chaining if (for example)
         // only synchronous validators are used (or no validators at all)
         if (promise.$$state.status !== 0) {
-            completePromise(promise.$$state.value);
+            completeValidation(self, promise.$$state.value, errors);
             return promise;
         }
 
@@ -145,7 +145,7 @@ extend(Field.prototype, {
             // If the completed validation round is still the latest validation
             // round then update the field state, otherwise do nothing.
             if (ref === self.$$validationId) 
-                completePromise(valid);        
+                completePromise(self, valid, errors);        
         }, function(err) {
             if (ref === self.$$validationId) {
                 var deferred = self.$$deferredValidation;
@@ -166,21 +166,6 @@ extend(Field.prototype, {
             return processSyncValidators(self, appendError) 
                 || processAsyncValidators(self, appendError) 
                 || self.$$q.when(true);
-        }
-
-        function completePromise(valid) {
-            var previous = self.$$valid,
-                deferred = self.$$deferredValidation;
-
-            self.$$valid = valid;
-            self.$$errors = errors;
-            self.$$deferredValidation = null;
-            self.$$validated = true;
-            
-            // Emit the event and then resolve the promise.
-            // This could be a bit racy.
-            self.emit('validate', self, previous);  
-            if (deferred) deferred.resolve(valid);          
         }
     },
     
@@ -220,6 +205,21 @@ function extend(target, source) {
     while(--k >= 0)
         target[keys[k]] = source[keys[k]];
     return target;
+}
+
+function completeValidation(field, valid, errors) {
+    var previous = field.$$valid,
+        deferred = field.$$deferredValidation;
+
+    field.$$valid = valid;
+    field.$$errors = errors;
+    field.$$deferredValidation = null;
+    field.$$validated = true;
+    
+    // Emit the event and then resolve the promise.
+    // This could be a bit racy.
+    field.emit('validate', field, previous);  
+    if (deferred) deferred.resolve(valid);     
 }
 
 function processSyncValidators(field, appendError) {

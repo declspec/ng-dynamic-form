@@ -11,8 +11,8 @@ FieldValidationForDirective.prototype = {
     dependencies: [ 'ValidatorFactory' ],
     
     link: function(scope, $element, attrs, formCtrl) {
-        if (!attrs['fieldValidationFor'] || !attrs['validators'])
-            throw new TypeError('validation-form: missing required attribute "' + (attrs['validators'] ? 'field-validation-for' : 'validators') + '"');
+        if (!attrs['fieldValidationFor'])
+            throw new TypeError('validation-form: missing required attribute "field-validation-for"');
 
         var field = formCtrl.form.getField(attrs['fieldValidationFor']),
             validatorFactory = this.validatorFactory;
@@ -20,15 +20,17 @@ FieldValidationForDirective.prototype = {
         var invalidClass = attrs['invalidClass'] || INVALID_CLASS,
             validClass = attrs['validClass'] || VALID_CLASS;
 
-        var off = scope.$watch(attrs['validators'], (n, o) => {
-            // Wait until the value stabilizes and then use it.
-            if (typeof(n) !== 'undefined') {
-                off();
-                initialise(field, n, validatorFactory);
-            }
-        });
+        // If validators are specified, grab them
+        if (attrs.hasOwnProperty('validators')) {
+            var off = scope.$watch(attrs['validators'], (n, o) => {
+                // Wait until the value stabilizes and then use it.
+                if (typeof(n) !== 'undefined') {
+                    off();
+                    initialise(field, n, validatorFactory);
+                }
+            });
+        }
 
-        // TODO: Look at whether this should be in here.
         field.on('validate', f => {
             var valid = f.isValid();
             $element[valid ? 'addClass' : 'removeClass'](validClass);
