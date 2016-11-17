@@ -65,6 +65,21 @@ Form.prototype = {
             : addField(this, name);
     },
 
+    hasDirtyFields: function() {
+        var fields = this.$$fields,
+            field;
+
+        for(var fieldName in fields) {
+            if (fields.hasOwnProperty(fieldName)) {
+                field = fields[fieldName];
+                if (field.isActive() && field.isDirty())
+                    return true;
+            }
+        }
+
+        return false;
+    },
+
     addCondition: function(condition, callback) {
         var dependentFields = [];
         // At this time there doesn't seem to be a way to extract the

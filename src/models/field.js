@@ -10,6 +10,7 @@ export default function Field(name, value, promise) {
     this.$$active = true;
     this.$$valid = true;
     this.$$validated = false;
+    this.$$dirty = false;
     this.$$errors = undefined;
     this.$$validators = undefined;
     this.$$asyncValidators = undefined;
@@ -48,6 +49,7 @@ extend(Field.prototype, {
         if (this.$$value !== value) {
             this.$$value = value;
             this.$$validated = false;
+            this.$$dirty = true;
             this.emit('change', this, value);
         }
 
@@ -82,6 +84,10 @@ extend(Field.prototype, {
         return self.$$deferredValue.promise;
     },
 
+    setPristine() {
+        this.$$dirty = false;
+    },
+
     setActive: function(active) {
         this.$$active = active;
         this.emit('toggle', this, active);
@@ -97,6 +103,10 @@ extend(Field.prototype, {
 
     isValidated: function() {
         return this.$$validated;
+    },
+
+    isDirty: function() {
+        return this.$$dirty;
     },
 
     hasValidation: function() {
