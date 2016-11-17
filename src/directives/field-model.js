@@ -1,4 +1,4 @@
-export function FieldModelDirective() {}
+export default function FieldModelDirective() {}
 
 FieldModelDirective.prototype = { 
     restrict: 'A',
@@ -10,13 +10,18 @@ FieldModelDirective.prototype = {
         var field = ctrls[0].form.getField(attrs['fieldModel']),
             modelController = ctrls[1];
 
+        modelController.$setViewValue(field.val());
+        modelController.$render();
+
         // Override model controller methods     
-        var commitViewValue = modelController.$commitViewValue;
+        var commitViewValue = modelController.$commitViewValue,
+            render = modelController.$render;
 
         modelController.$render = function() {
             var value = this.$modelValue || this.$viewValue;
             if (value || modelController.$dirty)
                 field.setValue(value);
+            return render.call(this);
         };
 
         modelController.$commitViewValue = function() {
