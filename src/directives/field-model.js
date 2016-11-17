@@ -1,4 +1,4 @@
-export default function FieldModelDirective() {}
+export function FieldModelDirective() {}
 
 FieldModelDirective.prototype = { 
     restrict: 'A',
