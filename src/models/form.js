@@ -224,6 +224,6 @@ function onFieldValidated(form, field) {
 
 function onFieldChanged(form, field) {
     setStateValue(form.$$state, field.name, field.val());
-    if (this.$$validationTrigger === 'change')
+    if (form.$$validationTrigger === 'change')
         validateFormField(form, field);
 }

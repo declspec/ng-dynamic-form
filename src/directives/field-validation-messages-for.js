@@ -11,18 +11,13 @@ FieldValidationMessagesForDirective.prototype = {
 
         var field = formCtrl.form.getField(attrs['fieldValidationMessagesFor']);
 
-        field.on('validate', onValidate);
-        onValidate(field);
+        field.on('validate', onUpdated);
+        field.on('change', onUpdated);
+        onUpdated(field);
 
-        function onValidate(f) {
-            if (f.isValid()) {
-                scope.errors =  null;
-                $element.hide();
-            }
-            else {
-                scope.errors = f.getErrors();
-                $element.show();
-            }
+        function onUpdated(f) {
+            scope.errors = f.getErrors();
+            $element[scope.errors ? 'show' : 'hide']();
         }
     }
 };

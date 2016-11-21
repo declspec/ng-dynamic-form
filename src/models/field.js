@@ -49,7 +49,9 @@ extend(Field.prototype, {
         if (this.$$value !== value) {
             this.$$value = value;
             this.$$validated = false;
+            this.$$errors = undefined;
             this.$$dirty = true;
+            
             this.emit('change', this, value);
         }
 

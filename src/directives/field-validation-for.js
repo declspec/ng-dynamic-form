@@ -31,11 +31,18 @@ FieldValidationForDirective.prototype = {
             });
         }
 
-        field.on('validate', f => {
-            var valid = f.isValid();
-            $element[valid ? 'addClass' : 'removeClass'](validClass);
-            $element[valid ? 'removeClass' : 'addClass'](invalidClass);
-        });
+        field.on('validate', onUpdated);
+        field.on('change', onUpdated);
+
+        onUpdated(field);
+
+        function onUpdated(f) {
+            let valid = f.isValid(),
+                validated = f.isValidated();
+
+            $element[validated && valid ? 'addClass' : 'removeClass'](validClass);
+            $element[validated && !valid ? 'addClass' : 'removeClass'](invalidClass); 
+        }
     }
 };
 
