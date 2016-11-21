@@ -8,6 +8,7 @@ function Form(initialState, parser, promise) {
     this.$$parser = parser;
     this.$$q = promise;
     this.$$state = Object.assign({}, initialState);
+    this.$$validationTrigger = 'change';
 
     this.$init();
 }
@@ -47,6 +48,14 @@ Form.prototype = {
         return this.$$q.all(pendingValidations).then(function(results) {
             return self.valid;
         });
+    },
+
+    setValidationTrigger(trigger) {
+        trigger = trigger || 'change';
+        if (trigger !== 'change' && trigger !== 'manual')
+            throw new Error(`Unexpected validation trigger encountered; expected one of "manual" or "change", got ${trigger}`);
+
+        this.$$validationTrigger = trigger;
     },
 
     getState: function() {
@@ -215,5 +224,6 @@ function onFieldValidated(form, field) {
 
 function onFieldChanged(form, field) {
     setStateValue(form.$$state, field.name, field.val());
-    validateFormField(form, field);
+    if (this.$$validationTrigger === 'change')
+        validateFormField(form, field);
 }
