@@ -20,6 +20,7 @@ var lib = angular.module('ng-dynamic-form', [])
 // Configure validators
 lib.config(['ValidatorFactoryProvider', function(validatorFactoryProvider) {
     validatorFactoryProvider.register('required', false, v.RequiredValidator);
+    validatorFactoryProvider.register('numeric', false, v.NumericValidator);
 }]);
 
 export default lib.name;
