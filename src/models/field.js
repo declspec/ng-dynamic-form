@@ -86,8 +86,8 @@ extend(Field.prototype, {
         return self.$$deferredValue.promise;
     },
 
-    setPristine() {
-        this.$$dirty = false;
+    setDirty(dirty) {
+        this.$$dirty = !!dirty;
     },
 
     setActive: function(active) {
