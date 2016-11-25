@@ -100,7 +100,7 @@ extend(Field.prototype, {
     },
 
     isValid: function() {
-        return (this.$$validated || !this.hasValidation()) && this.$$valid;
+        return this.$$validated && this.$$valid;
     },
 
     isValidated: function() {

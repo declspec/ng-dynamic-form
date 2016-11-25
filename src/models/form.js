@@ -189,7 +189,7 @@ function isFormValid(form) {
     for(var fieldName in fields) {
         if (fields.hasOwnProperty(fieldName)) {
             var field = fields[fieldName];
-            if (field.isActive() && !field.isValid()) 
+            if (field.isActive() && !field.isValid() && field.hasValidation()) 
                 return false;
         }            
     }
