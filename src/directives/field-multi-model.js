@@ -12,12 +12,12 @@ FieldMultiModelDirective.prototype = {
             value = attrs['value'],
             allowMultiple = attrs['type'] === 'checkbox';
 
-        field.on('change', onUpdate);
-
         $element.on('change', function() {
             if (allowMultiple || this.checked)
                 scope.$apply(processChange);
         }); 
+
+        onUpdate(field);
 
         function processChange() {
             if (!allowMultiple)
@@ -39,7 +39,9 @@ FieldMultiModelDirective.prototype = {
             }
         }
 
-        function onUpdate(field, modelValue) {
+        function onUpdate(field) {
+            let modelValue = field.val();
+
             element.checked = modelValue 
                 && ((!Array.isArray(modelValue) && modelValue == value) 
                     || (Array.isArray(modelValue) && modelValue.indexOf(value) >= 0));
