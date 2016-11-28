@@ -1,7 +1,5 @@
 import EventEmitter from 'events';
 
-const REFERENCE_TYPES = [ 'object', 'array' ];
-
 export default function Field(name, value, promise) {
     EventEmitter.call(this);
 
@@ -47,11 +45,22 @@ extend(Field.prototype, {
             deferred = this.$$deferredValue;
             this.$$deferredValue = null;
         }
-        
-        this.$$value = value;
-        this.$$validated = false;
-        this.$$errors = undefined;
-        this.$$dirty = true;
+
+        let updated = false;
+
+        if (value !== this.$$value)
+            updated = true;
+        else {
+            let type = getType(value);
+            updated = type === 'object' || type === 'array';
+        }
+
+        if (updated) {
+            this.$$value = value;
+            this.$$validated = false;
+            this.$$errors = undefined;
+            this.$$dirty = true;
+        }
         
         this.emit('change', this, value);
 
