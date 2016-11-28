@@ -186,6 +186,7 @@ extend(Field.prototype, {
     // --
     equals:     function(value) { return equals(this.val(), value); },
     matches:    function(value) { return matches(this.val(), value); },
+    contains:   function(value) { return contains(this.val(), value); },
     anyMatch:   function(value) { return any(this.val(), value, match); },
     matchesAny: function(value) { return any(value, this.val(), match); },
     allMatch:   function(value) { return all(this.val(), value, match); },
@@ -194,6 +195,10 @@ extend(Field.prototype, {
     equalsAny:  function(value) { return any(value, this.val(), equals); },
     allEqual:   function(value) { return all(this.val(), value, equals); },
     equalsAll:  function(value) { return all(value, this.val(), equals); },
+    anyContain: function(value) { return any(this.val(), value, contains); },
+    containsAny:function(value) { return any(value, this.val(), contains); },
+    allContain: function(value) { return all(this.val(), value, contains); },
+    containsAll:function(value) { return all(value, this.val(), contains); },
 
     empty: function() {
         return empty(this.val());
@@ -298,6 +303,22 @@ function empty(obj) {
         return true;
     default:
         // The empty case for other types is handled at the top of the fn (!obj)
+        return false;
+    }
+}
+
+function contains(target, value) {
+    switch(getType(target)) {
+    case 'string':
+        return target.indexOf(value) >= 0;
+    case 'object':
+        return target.hasOwnProperty(value);
+    case 'array':
+        return target.some(function(v) {
+            return equals(v, value);
+        });
+    default:
+        // No 'contains' method makes sense, return false.
         return false;
     }
 }
