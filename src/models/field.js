@@ -1,5 +1,7 @@
 import EventEmitter from 'events';
 
+const REFERENCE_TYPES = [ 'object', 'array' ];
+
 export default function Field(name, value, promise) {
     EventEmitter.call(this);
 
@@ -45,15 +47,13 @@ extend(Field.prototype, {
             deferred = this.$$deferredValue;
             this.$$deferredValue = null;
         }
-
-        if (this.$$value !== value) {
-            this.$$value = value;
-            this.$$validated = false;
-            this.$$errors = undefined;
-            this.$$dirty = true;
-            
-            this.emit('change', this, value);
-        }
+        
+        this.$$value = value;
+        this.$$validated = false;
+        this.$$errors = undefined;
+        this.$$dirty = true;
+        
+        this.emit('change', this, value);
 
         // Resolve the pending promise if needed
         if (deferred) deferred.resolve(value);
