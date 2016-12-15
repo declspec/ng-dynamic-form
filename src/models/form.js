@@ -171,7 +171,7 @@ function setStateValue(state, fieldName, value) {
     
     // Ensure the hierarchy exists
     while(pos < len) {
-        var name = bits[pos];
+        var name = bits[pos++];
         state = !state.hasOwnProperty(name)
             ? (state[name] = {})
             : state[name];
