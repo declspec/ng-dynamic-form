@@ -219,6 +219,8 @@ extend(Field.prototype, {
 // --
 
 function labelise(name) {
+    name = name.substring(name.lastIndexOf('.') + 1);
+
     var label = name.replace(/([A-Z]+)/g, ' $1')
         .replace(/\W+/g, ' ')
         .replace(/\s{2,}/g, ' ');
