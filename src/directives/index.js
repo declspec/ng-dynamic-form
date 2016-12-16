@@ -6,3 +6,4 @@ export * from './field-validation-messages-for';
 export * from './field-validation-message-for';
 export * from './field-condition';
 export * from './field-condition-for';
+export * from './multi-field-condition-for';

@@ -196,10 +196,10 @@ extend(Field.prototype, {
     equals:     function(value) { return equals(this.val(), value); },
     matches:    function(value) { return matches(this.val(), value); },
     contains:   function(value) { return contains(this.val(), value); },
-    anyMatch:   function(value) { return any(this.val(), value, match); },
-    matchesAny: function(value) { return any(value, this.val(), match); },
-    allMatch:   function(value) { return all(this.val(), value, match); },
-    matchesAll: function(value) { return all(value, this.val(), match); },
+    anyMatch:   function(value) { return any(this.val(), value, matches); },
+    matchesAny: function(value) { return any(value, this.val(), matches); },
+    allMatch:   function(value) { return all(this.val(), value, matches); },
+    matchesAll: function(value) { return all(value, this.val(), matches); },
     anyEqual:   function(value) { return any(this.val(), value, equals); },
     equalsAny:  function(value) { return any(value, this.val(), equals); },
     allEqual:   function(value) { return all(this.val(), value, equals); },
@@ -340,7 +340,7 @@ function matches(target, to) {
     case 'regexp':
         return to.test(target);
     case 'array':
-        if (!Array.isArray(target) || target.length < to.length)
+        if (!Array.isArray(target) || target.length < to.length || to.length === 0 && target.length !== 0)
             return false;
 
         for(var i = 0, j = to.length; i < j; ++i) {
