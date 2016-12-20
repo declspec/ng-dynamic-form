@@ -89,6 +89,15 @@ Form.prototype = {
         return false;
     },
 
+    setPristine: function() {
+        var fields = this.$$fields;
+
+        for(var fieldName in fields) {
+            if (fields.hasOwnProperty(fieldName))
+                fields[fieldName].setDirty(false);
+        }
+    },
+
     addCondition: function(condition, callback) {
         var dependentFields = [];
         // At this time there doesn't seem to be a way to extract the
