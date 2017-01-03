@@ -74,6 +74,18 @@ Form.prototype = {
             : addField(this, name);
     },
 
+    getFields: function() {
+        var fields = this.$$fields,
+            arr = [];
+
+        for(var fieldName in fields) {
+            if (fields.hasOwnProperty(fieldName))
+                arr.push(fields[fieldName]);
+        }
+
+        return arr;
+    },
+
     hasDirtyFields: function() {
         var fields = this.$$fields,
             field;
