@@ -7,8 +7,11 @@ FieldConditionForDirective.prototype = {
         if (!attrs['fieldConditionFor'] || !attrs['condition'])
             throw new TypeError('field-condition-for: missing required attribute "' + (attrs['condition'] ? 'field-condition-for' : 'condition') + '"'); 
 
-        var speed = parseInt(attrs['speed'], 10) || 300,
+        var speed = parseInt(attrs['speed'], 10),
             field = formCtrl.form.getField(attrs['fieldConditionFor']);
+        
+        if (isNaN(speed))
+            speed = 300;
 
         var off = formCtrl.form.addCondition(attrs['condition'], active => {
             field.setActive(active);
