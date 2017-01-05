@@ -17,6 +17,7 @@ FieldMultiModelDirective.prototype = {
                 scope.$apply(processChange);
         }); 
 
+        field.on('change', onUpdate);
         onUpdate(field);
 
         function processChange() {
@@ -40,11 +41,12 @@ FieldMultiModelDirective.prototype = {
         }
 
         function onUpdate(field) {
-            let modelValue = field.val();
+            const modelValue = field.val();
+            const shouldBeChecked = (!Array.isArray(modelValue) && modelValue == value) 
+                || (Array.isArray(modelValue) && modelValue.indexOf(value) >= 0);
 
-            element.checked = modelValue 
-                && ((!Array.isArray(modelValue) && modelValue == value) 
-                    || (Array.isArray(modelValue) && modelValue.indexOf(value) >= 0));
+            if (element.checked !== shouldBeChecked)
+                element.checked = shouldBeChecked;
         }
     }
 };
