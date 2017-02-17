@@ -62,6 +62,22 @@ Form.prototype = {
         return this.$$state;
     },
 
+    getStateValue: function(fieldName) {
+        var state = this.$$state,
+            pos = 0,
+            bits = fieldName.split('.'),
+            len = bits.length;
+
+        while(pos < len && state != null) {
+            state = state.hasOwnProperty(bits[pos])
+                ? state[bits[pos]]
+                : null;
+            pos++;
+        }
+
+        return state;
+    },
+
     valueOf: function(fieldName) {
         return this.$$fields.hasOwnProperty(fieldName)
             ? this.$$fields[fieldName].val()
@@ -161,28 +177,13 @@ export default Form;
 
 function addField(form, name) {
     // Attempt to find the value in the state
-    var value = getStateValue(form.$$state, name),
+    var value = form.getStateValue(name),
         field = new Field(name, value, form.$$q);
 
     field.on('change', form.$onFieldChanged);
     field.on('validate', form.$onFieldValidated);
 
     return (form.$$fields[name] = field);
-}
-
-function getStateValue(state, fieldName) {
-    var pos = 0,
-        bits = fieldName.split('.'),
-        len = bits.length;
-
-    while(pos < len && state != null) {
-        state = state.hasOwnProperty(bits[pos])
-            ? state[bits[pos]]
-            : null;
-        pos++;
-    }
-
-    return state;
 }
 
 function setStateValue(state, fieldName, value) {
