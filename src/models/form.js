@@ -64,16 +64,10 @@ Form.prototype = {
 
     getStateValue: function(fieldName) {
         var state = this.$$state,
-            pos = 0,
-            bits = fieldName.split('.'),
-            len = bits.length;
+            bits = fieldName.split('.');
 
-        while(pos < len && state != null) {
-            state = state.hasOwnProperty(bits[pos])
-                ? state[bits[pos]]
-                : null;
-            pos++;
-        }
+        for (var i = 0, j = bits.length; i < j; ++i) 
+            state = state[bits[i]];
 
         return state;
     },
