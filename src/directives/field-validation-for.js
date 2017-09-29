@@ -14,7 +14,7 @@ FieldValidationForDirective.prototype = {
         if (!attrs['fieldValidationFor'])
             throw new TypeError('validation-form: missing required attribute "field-validation-for"');
 
-        var field = formCtrl.form.getField(attrs['fieldValidationFor']),
+        var fields = attrs['fieldValidationFor'].split(',').map(name => formCtrl.form.getField(name)),
             validatorFactory = this.validatorFactory;
 
         var invalidClass = attrs['invalidClass'] || INVALID_CLASS,
@@ -26,19 +26,22 @@ FieldValidationForDirective.prototype = {
                 // Wait until the value stabilizes and then use it.
                 if (typeof(n) !== 'undefined') {
                     off();
-                    initialise(field, n, validatorFactory);
+                    initialise(fields, n, validatorFactory);
                 }
             });
         }
 
-        field.on('validate', onUpdated);
-        field.on('change', onUpdated);
+        for(var i = 0, j = fields.length; i < j; ++i) {
+            const field = fields[i]
+            field.on('validate', onUpdated);
+            field.on('change', onUpdated);
+        }
 
-        onUpdated(field);
+        onUpdated();
 
-        function onUpdated(f) {
-            let valid = f.isValid(),
-                validated = f.isValidated();
+        function onUpdated() {
+            let valid = fields.every(f => f.isValid()),
+                validated = fields.every(f => f.isValidated());
 
             $element[validated && valid ? 'addClass' : 'removeClass'](validClass);
             $element[validated && !valid ? 'addClass' : 'removeClass'](invalidClass); 
@@ -46,13 +49,16 @@ FieldValidationForDirective.prototype = {
     }
 };
 
-function initialise(field, metadata, factory) {
-    if (metadata && !Array.isArray(metadata))
-        field.addValidator(createValidator(metadata, factory));
-    else if (Array.isArray(metadata) && metadata.length > 0) {
-        for(var i = 0, j = metadata.length; i < j; ++i) {
-            field.addValidator(createValidator(metadata[i], factory));
-        }
+function initialise(fields, metadata, factory) {
+    const validators = Array.isArray(metadata)
+        ? metadata.map(m => createValidator(m, factory))
+        : [ createValidator(metadata, factory) ];
+
+    for(var i = 0, j = fields.length; i < j; ++i) {
+        const field = fields[i];
+
+        for(var k = 0, l = validators.length; k < l; ++k)
+            field.addValidator(validators[k]);
     }
 }
 
