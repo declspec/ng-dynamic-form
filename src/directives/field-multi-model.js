@@ -1,16 +1,22 @@
-export function FieldMultiModelDirective() {}
+export function FieldMultiModelDirective(parse) {
+    this.parse = parse;
+}
 
 FieldMultiModelDirective.prototype = {
     restrict: 'A',
     require: '^^dynamicForm',
+    dependencies: [ '$parse' ],
     link: function(scope, $element, attrs, formController) {
-        if (!attrs['fieldMultiModel'] || !attrs['value'])
+        if (!attrs['fieldMultiModel'] || (!attrs['value'] && !attrs['ngValue']))
             throw new TypeError('form-multi-model: missing required attribute "' + (!attrs['fieldMultiModel'] ? 'field-multi-model' : 'value') + '"');
 
         var field = formController.form.getField(attrs['fieldMultiModel']),
             element = $element.get(0),
-            value = attrs['value'],
             allowMultiple = attrs['type'] === 'checkbox';
+
+        var value = attrs['ngValue']
+            ? this.parse(attrs['ngValue'])(formController.form.$$fields)
+            : attrs['value'];
 
         $element.on('change', function() {
             if (allowMultiple || this.checked)

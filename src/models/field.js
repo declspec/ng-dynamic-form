@@ -297,7 +297,7 @@ function getType(obj) {
 }
 
 function empty(obj) {
-    if (!obj)
+    if (obj === null || typeof(obj) === 'undefined')
         return true;
     
     var type = getType(obj);
