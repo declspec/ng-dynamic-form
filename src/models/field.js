@@ -57,9 +57,7 @@ extend(Field.prototype, {
 
         if (updated) {
             this.$$value = value;
-            this.$$validated = false;
-            this.$$errors = undefined;
-            this.$$dirty = true;
+            this.setDirty(true);
         }
         
         this.emit('change', this, value);
@@ -96,6 +94,8 @@ extend(Field.prototype, {
     },
 
     setDirty(dirty) {
+        this.$$validated = false;
+        this.$$errors = undefined;
         this.$$dirty = !!dirty;
     },
 
