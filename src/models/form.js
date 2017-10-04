@@ -50,7 +50,24 @@ Form.prototype = {
         });
     },
 
-    setValidationTrigger(trigger) {
+    setFieldDependencies: function(fieldName, dependencyNames) {
+        var field = this.getField(fieldName);
+        var dependencies = Array.isArray(dependencyNames)
+            ? dependencyNames.map(name => this.getField(name))
+            : [ this.getField(dependencyNames) ];
+        
+        var listener = f => {
+            if (field.isValidated()) {
+                field.invalidate();
+                field.emit('change', field, field.val());
+            }
+        };
+
+        for(var i = 0, j = dependencies.length; i < j; ++i)
+            dependencies[i].on('change', listener);
+    },
+
+    setValidationTrigger: function(trigger) {
         trigger = trigger || 'change';
         if (trigger !== 'change' && trigger !== 'manual')
             throw new Error(`Unexpected validation trigger encountered; expected one of "manual" or "change", got ${trigger}`);

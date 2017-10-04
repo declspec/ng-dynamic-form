@@ -93,7 +93,7 @@ extend(Field.prototype, {
         return self.$$deferredValue.promise;
     },
 
-    setDirty(dirty) {
+    setDirty: function(dirty) {
         this.$$validated = false;
         this.$$errors = undefined;
         this.$$dirty = !!dirty;
@@ -102,6 +102,10 @@ extend(Field.prototype, {
     setActive: function(active) {
         this.$$active = active;
         this.emit('toggle', this, active);
+    },
+
+    invalidate: function() {
+        this.$$validated = false;
     },
 
     isActive: function() {
