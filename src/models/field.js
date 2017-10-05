@@ -307,6 +307,7 @@ function empty(obj) {
     var type = getType(obj);
     switch(type) {
     case 'array':
+    case 'string':
         return obj.length === 0;
     case 'date':
         return obj.getTime() === 0;
