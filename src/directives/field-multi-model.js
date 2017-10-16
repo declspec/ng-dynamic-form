@@ -15,7 +15,7 @@ FieldMultiModelDirective.prototype = {
             allowMultiple = attrs['type'] === 'checkbox';
 
         var value = attrs['ngValue']
-            ? this.parse(attrs['ngValue'])(formController.form.$$fields)
+            ? this.parse(attrs['ngValue'])(scope, formController.form.$$fields)
             : attrs['value'];
 
         $element.on('change', function() {
