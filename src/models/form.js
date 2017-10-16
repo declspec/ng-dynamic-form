@@ -80,13 +80,10 @@ Form.prototype = {
     },
 
     getStateValue: function(fieldName) {
-        var state = this.$$state,
-            bits = fieldName.split('.');
+        var bits = fieldName.split('.'),
+            root = getStateRoot(this.$$state, bits);
 
-        for (var i = 0, j = bits.length; i < j; ++i) 
-            state = state[bits[i]];
-
-        return state;
+        return root[bits[bits.length-1]];
     },
 
     valueOf: function(fieldName) {
@@ -137,13 +134,18 @@ Form.prototype = {
         }
     },
 
-    addCondition: function(condition, callback) {
+    addCondition: function(condition, scope, callback) {
+        if (!callback && typeof(scope) === 'function') {
+            callback = scope;
+            scope = null;
+        }
+
         var dependentFields = [];
         // At this time there doesn't seem to be a way to extract the
         // variables out of a $parsed expression in order to know what
         // needs to be provided. Due to this we use our own special (stupid)
         // syntax to lightly sugar the expression (essentially just wrap all the field names in square brackets)
-        var condition = condition.replace(/\[([a-zA-Z\$_]\w+)\]/g, function(m, fieldName) {
+        var condition = condition.replace(/\[([a-zA-Z\$_][\w.]+)\]/g, function(m, fieldName) {
             if (dependentFields.indexOf(fieldName) < 0)
                 dependentFields.push(fieldName);
             return fieldName;
@@ -175,7 +177,7 @@ Form.prototype = {
         };
 
         function checkCondition() {
-            var result = parsedExpr(fields) || false;
+            var result = parsedExpr(scope, fields) || false;
             if (result !== lastValue) {
                 lastValue = result;
                 callback(result);
@@ -192,6 +194,7 @@ function addField(form, name) {
         field = new Field(name, value, form.$$q);
 
     field.on('change', form.$onFieldChanged);
+    field.on('toggle', form.$onFieldChanged);
     field.on('validate', form.$onFieldValidated);
 
     return (form.$$fields[name] = field);
@@ -199,21 +202,27 @@ function addField(form, name) {
 
 function setStateValue(state, fieldName, value) {
     var bits = fieldName.split('.'),
-        pos = 0,
-        len = bits.length - 1;
+        root = getStateRoot(state, bits);
+
+    root[bits[bits.length-1]] = value;
+}
+
+function getStateRoot(state, fieldComponents) {
+    var pos = 0,
+        len = fieldComponents.length - 1;
     
     // Ensure the hierarchy exists
     while(pos < len) {
-        var name = bits[pos++];
+        var name = fieldComponents[pos++];
         state = !state.hasOwnProperty(name)
             ? (state[name] = {})
             : state[name];
-        
+
         if (typeof(state) !== 'object' || state[name] === null)
             throw new Error('attempting to overwrite existing non-object state property');
     }
-    
-    state[bits[len]] = value;
+
+    return state;
 }
 
 function isFormValid(form) {
