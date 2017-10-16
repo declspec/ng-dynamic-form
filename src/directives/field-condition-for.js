@@ -13,7 +13,7 @@ FieldConditionForDirective.prototype = {
         if (isNaN(speed))
             speed = 300;
 
-        var off = formCtrl.form.addCondition(attrs['condition'], active => {
+        var off = formCtrl.form.addCondition(attrs['condition'], scope, active => {
             field.setActive(active);
             active ? $element.show(speed) : $element.hide();
         });
