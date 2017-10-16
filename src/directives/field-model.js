@@ -11,6 +11,7 @@ FieldModelDirective.prototype = {
             modelController = ctrls[1];
 
         modelController.$setViewValue(field.val());
+        modelController.$commitViewValue();
         modelController.$render();
 
         // Override model controller methods     
