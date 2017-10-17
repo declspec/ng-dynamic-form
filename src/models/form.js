@@ -218,7 +218,7 @@ function getStateRoot(state, fieldComponents) {
             ? (state[name] = {})
             : state[name];
 
-        if (typeof(state) !== 'object' || state[name] === null)
+        if (typeof(state) !== 'object' || state === null)
             throw new Error('attempting to overwrite existing non-object state property');
     }
 
