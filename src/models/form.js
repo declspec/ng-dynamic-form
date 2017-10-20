@@ -57,14 +57,14 @@ Form.prototype = {
             : [ this.getField(dependencyNames) ];
         
         var listener = f => {
-            if (field.isValidated()) {
-                field.invalidate();
-                field.emit('change', field, field.val());
-            }
+            field.invalidate();
+            field.emit('change', field, field.val());
         };
 
-        for(var i = 0, j = dependencies.length; i < j; ++i)
+        for(var i = 0, j = dependencies.length; i < j; ++i) {
             dependencies[i].on('change', listener);
+            dependencies[i].on('toggle', listener);
+        }
     },
 
     setValidationTrigger: function(trigger) {
