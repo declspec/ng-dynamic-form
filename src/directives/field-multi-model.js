@@ -14,6 +14,7 @@ FieldMultiModelDirective.prototype = {
             element = $element.get(0),
             allowMultiple = attrs['type'] === 'checkbox';
 
+        var trackBy = attrs['trackBy'];
         var value = attrs['ngValue']
             ? this.parse(attrs['ngValue'])(scope, formController.form.$$fields)
             : attrs['value'];
@@ -24,6 +25,7 @@ FieldMultiModelDirective.prototype = {
         }); 
 
         field.on('change', onUpdate);
+        field.on('toggle', onUpdate);
         onUpdate(field);
 
         function processChange() {
@@ -31,10 +33,17 @@ FieldMultiModelDirective.prototype = {
                 return field.setValue(value);
             
             var model = field.val();
+            var idx = -1;
+
             if (!Array.isArray(model))
                 model = model ? [ model ] : [];
-                
-            var idx = model.indexOf(value);
+
+            for(var i = 0, j = model.length; i < j; ++i) {
+                if (compareValues(model[i])) {
+                    idx = i;
+                    break;
+                }
+            }
 
             if (element.checked && idx < 0) {
                 model.push(value);
@@ -47,12 +56,22 @@ FieldMultiModelDirective.prototype = {
         }
 
         function onUpdate(field) {
-            const modelValue = field.val();
-            const shouldBeChecked = (!Array.isArray(modelValue) && modelValue == value) 
-                || (Array.isArray(modelValue) && modelValue.indexOf(value) >= 0);
+            var modelValue = field.val();
+            var shouldBeChecked = (!Array.isArray(modelValue) && compareValues(modelValue)) 
+                || (Array.isArray(modelValue) && modelValue.some(compareValues));
 
             if (element.checked !== shouldBeChecked)
                 element.checked = shouldBeChecked;
+        }
+
+        function compareValues(modelValue) {
+            if (!trackBy)
+                return modelValue == value;
+
+            return modelValue && value
+                && typeof(modelValue) === typeof(value)
+                && modelValue.hasOwnProperty(trackBy) && value.hasOwnProperty(trackBy)
+                && modelValue[trackBy] == value[trackBy];
         }
     }
 };
