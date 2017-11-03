@@ -170,7 +170,7 @@ extend(Field.prototype, {
             // If the completed validation round is still the latest validation
             // round then update the field state, otherwise do nothing.
             if (ref === self.$$validationId) 
-                completePromise(self, valid, errors);        
+                completeValidation(self, valid, errors);        
         }, function(err) {
             if (ref === self.$$validationId) {
                 var deferred = self.$$deferredValidation;
