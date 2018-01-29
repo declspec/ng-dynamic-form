@@ -231,7 +231,7 @@ function isFormValid(form) {
     for(var fieldName in fields) {
         if (fields.hasOwnProperty(fieldName)) {
             var field = fields[fieldName];
-            if (field.isActive() && !field.isValid() && field.hasValidation()) 
+            if (!isFieldValid(field))
                 return false;
         }            
     }
@@ -242,8 +242,10 @@ function isFormValid(form) {
 function validateFormField(form, field) {
     // Only validate fields that haven't been validated yet and are currently active.
     // This saves on redundantly making expensive validation calls
-    if (field.isValidated() || !field.isActive() || !field.hasValidation()) 
+    if (field.isValidated() || !field.isActive() || !field.hasValidation()) {
+        updateValidity(form, isFieldValid(field));
         return null;
+    }
 
     ++form.validating;
 
@@ -268,4 +270,8 @@ function onFieldChanged(form, field) {
     setStateValue(form.$$state, field.name, field.val());
     if (form.$$validationTrigger === 'change')
         validateFormField(form, field);
+}
+
+function isFieldValid(field) {
+    return field.isValid() || !field.isActive() || !field.hasValidation()
 }
