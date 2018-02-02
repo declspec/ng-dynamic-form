@@ -31,11 +31,19 @@ FieldValidationForDirective.prototype = {
             });
         }
 
+        var unbinders = [];
+
         for(var i = 0, j = fields.length; i < j; ++i) {
             const field = fields[i]
-            field.on('validate', onUpdated);
-            field.on('change', onUpdated);
+            unbinders.push(field.on('validate', onUpdated));
+            unbinders.push(field.on('change', onUpdated));
         }
+
+        // Remove all listeners once the directive is destroyed.
+        this.$onDestroy = () => {
+            for(var i = 0, j = unbinders.length; i < j; ++i)
+                unbinders[i]();
+        };
 
         onUpdated();
 

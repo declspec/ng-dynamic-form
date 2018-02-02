@@ -11,8 +11,14 @@ FieldValidationMessageForDirective.prototype = {
 
         var field = formCtrl.form.getField(attrs['fieldValidationMessageFor']);
 
-        field.on('validate', onUpdated);
-        field.on('change', onUpdated);
+        var unbindValidate = field.on('validate', onUpdated),
+            unbindChange = field.on('change', onUpdated);
+
+        this.$onDestroy = () => {
+            unbindValidate();
+            unbindChange();
+        };
+        
         onUpdated(field);
 
         function onUpdated(f) {

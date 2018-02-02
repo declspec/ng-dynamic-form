@@ -24,8 +24,15 @@ FieldMultiModelDirective.prototype = {
                 scope.$apply(processChange);
         }); 
 
-        field.on('change', onUpdate);
-        field.on('toggle', onUpdate);
+        var unbindChange = field.on('change', onUpdate),
+            unbindToggle = field.on('toggle', onUpdate);
+        
+        // Remove all listeners once the directive is destroyed.
+        this.$onDestroy = () => {
+            unbindChange();
+            unbindToggle();
+        };
+
         onUpdate(field);
 
         function processChange() {
