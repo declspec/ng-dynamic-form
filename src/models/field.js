@@ -37,6 +37,10 @@ extend(Field.prototype, {
         return this.$$active ? this.$$value : null;
     },
 
+    off: function(type, listener) {
+        return this.removeListener(type, listener);
+    },
+
     setValue: function(value) {
         var deferred;
 
@@ -46,9 +50,10 @@ extend(Field.prototype, {
             this.$$deferredValue = null;
         }
 
-        let updated = false;
+        let updated = false,
+            previousValue = this.$$value;
 
-        if (value !== this.$$value)
+        if (value !== previousValue)
             updated = true;
         else {
             let type = getType(value);
@@ -60,7 +65,7 @@ extend(Field.prototype, {
             this.setDirty(true);
         }
         
-        this.emit('change', this, value);
+        this.emit('change', this, value, previousValue);
 
         // Resolve the pending promise if needed
         if (deferred) deferred.resolve(value);
@@ -68,7 +73,7 @@ extend(Field.prototype, {
 
     setValueAsync: function(future) {
         if (!future || typeof(future) !== 'object' || typeof(future.then) !== 'function')
-            throw new TypeError('"future" must be a valid "thenable" promise');
+            throw new TypeError('"future" must be a valid "then-able" promise');
 
         var ref = ++this.$$valueId,
             self = this;
