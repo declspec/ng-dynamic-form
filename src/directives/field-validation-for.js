@@ -80,7 +80,7 @@ function createValidator(obj, validatorFactory) {
         throw new TypeError('validation-for: invalid validator encountered: ' + JSON.stringify(obj));
     else {
         validator = validatorFactory(obj.name);
-        args = obj.args || null;
+        args = obj;
     }
 
     if (!validator)

@@ -155,11 +155,13 @@ Form.prototype = {
             throw new Error('Form::addCondition(): conditional expression does not contain any field references');
 
         var parsedExpr = this.$$parser(condition),
-            fields = this.$$fields,
+            fields = {},
             lastValue;
 
         for(var i = 0, j = dependentFields.length; i < j; ++i) {
             var field = this.getField(dependentFields[i]);
+            setStateValue(fields, field.name, field);
+            
             field.on('toggle', checkCondition);
             field.on('change', checkCondition);
         }
