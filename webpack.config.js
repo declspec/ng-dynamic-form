@@ -1,29 +1,32 @@
-const LIBRARY_NAME = 'ng-dynamic-form';
-
-var webpack = require('webpack');
+const path = require('path');
+const webpack = require('webpack');
+const LibraryName = 'ng-dynamic-form';
+const MinLibraryName = `${LibraryName}.min`;
 
 module.exports = {
     entry: {
-        'ng-dynamic-form': './index.js',
-        'ng-dynamic-form.min': './index.js'
+        [LibraryName]: './index.js',
+        [MinLibraryName]: './index.js'
     },
 
     output: {
-        path: './bin',
+        path: path.resolve('./bin'),
         publicPath: 'bin/',
-        filename: '[name].js'
+        filename: '[name].js',
+        library: LibraryName,
+        libraryTarget: 'umd'
     },
 
     resolve: {
-        extensions: [ '', '.webpack.js', '.web.js', '.js' ]
+        extensions: ['.webpack.js', '.web.js', '.js']
     },
 
     module: {
         loaders: [
-            { 
+            {
                 test: /\.js$/,
                 exclude: /node_modules/,
-                loader: 'babel',
+                loader: 'babel-loader',
                 query: {
                     presets: ['es2015']
                 }
