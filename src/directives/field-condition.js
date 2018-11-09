@@ -16,7 +16,7 @@ FieldConditionDirective.prototype = {
         });
 
         // When destroyed, release the condition
-        this.$onDestroy = off;
+        scope.$on('$destroy', off);
     }
 };
 

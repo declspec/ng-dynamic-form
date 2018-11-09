@@ -1,2 +1,2 @@
-const lib = require('./bin/ng-dynamic-form');
+var lib = require('./bin/ng-dynamic-form');
 module.exports = lib;

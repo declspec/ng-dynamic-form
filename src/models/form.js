@@ -155,12 +155,11 @@ Form.prototype = {
             console.warn('Form::addCondition(): conditional expression does not contain any field references and will only be evaluated once');
             
         var parsedExpr = this.$$parser(condition),
-            fields = {},
+            fields = this.$$fields,
             lastValue;
 
         for(var i = 0, j = dependentFields.length; i < j; ++i) {
             var field = this.getField(dependentFields[i]);
-            setStateValue(fields, field.name, field);
             
             field.on('toggle', checkCondition);
             field.on('change', checkCondition);

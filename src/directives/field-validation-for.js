@@ -40,10 +40,10 @@ FieldValidationForDirective.prototype = {
         }
 
         // Remove all listeners once the directive is destroyed.
-        this.$onDestroy = () => {
+        scope.$on('$destroy', () => {
             for(var i = 0, j = unbinders.length; i < j; ++i)
                 unbinders[i]();
-        };
+        });
 
         onUpdated();
 

@@ -28,10 +28,10 @@ FieldMultiModelDirective.prototype = {
             unbindToggle = field.on('toggle', onUpdate);
         
         // Remove all listeners once the directive is destroyed.
-        this.$onDestroy = () => {
+        scope.$on('$destroy', () => {
             unbindChange();
             unbindToggle();
-        };
+        });
 
         onUpdate(field);
 

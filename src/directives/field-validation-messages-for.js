@@ -14,10 +14,10 @@ FieldValidationMessagesForDirective.prototype = {
         var unbindValidate = field.on('validate', onUpdated),
             unbindChange = field.on('change', onUpdated);
 
-        this.$onDestroy = () => {
+        scope.$on('$destroy', () => {
             unbindValidate();
             unbindChange();
-        };
+        });
         
         onUpdated(field);
 
