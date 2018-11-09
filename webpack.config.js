@@ -5,8 +5,8 @@ const MinLibraryName = `${LibraryName}.min`;
 
 module.exports = {
     entry: {
-        [LibraryName]: './index.js',
-        [MinLibraryName]: './index.js'
+        [LibraryName]: './src/index.js',
+        [MinLibraryName]: './src/index.js'
     },
 
     output: {
