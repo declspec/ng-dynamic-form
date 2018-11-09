@@ -476,6 +476,15 @@ extend(Field.prototype, {
         return this.$$active ? this.$$value : null;
     },
 
+    on: function on(type, listener) {
+        var _this = this;
+
+        _events2.default.prototype.on.call(this, type, listener);
+        return function () {
+            return _this.off(type, listener);
+        };
+    },
+
     off: function off(type, listener) {
         return this.removeListener(type, listener);
     },

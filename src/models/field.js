@@ -37,6 +37,11 @@ extend(Field.prototype, {
         return this.$$active ? this.$$value : null;
     },
 
+    on: function(type, listener) {
+        EventEmitter.prototype.on.call(this, type, listener);
+        return () => this.off(type, listener);
+    },
+
     off: function(type, listener) {
         return this.removeListener(type, listener);
     },
