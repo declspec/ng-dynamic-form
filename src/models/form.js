@@ -152,8 +152,8 @@ Form.prototype = {
         });
 
         if (dependentFields.length === 0)
-            throw new Error('Form::addCondition(): conditional expression does not contain any field references');
-
+            console.warn('Form::addCondition(): conditional expression does not contain any field references and will only be evaluated once');
+            
         var parsedExpr = this.$$parser(condition),
             fields = {},
             lastValue;
